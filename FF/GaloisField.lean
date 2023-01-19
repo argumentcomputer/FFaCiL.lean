@@ -88,7 +88,7 @@ class PrimeField (K : Type _) [GaloisField K] where
   fromP : K → Int
 
 instance : PrimeField (Zmod p) where
-  fromP := id
+  fromP := Zmod.rep
 
 open Polynomial
 
