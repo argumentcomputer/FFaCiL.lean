@@ -1,4 +1,5 @@
 import YatimaStdLib.Polynomial
+import YatimaStdLib.Ring
 import YatimaStdLib.Zmod
 import YatimaStdLib.Bit
 
@@ -10,13 +11,7 @@ Here we port some definitions from https://hackage.haskell.org/package/galois-fi
 -/
 
 /-- The structure of a Galois field on t-/
-class GaloisField (K : Type _) where
-  plus : K → K → K
-  times : K → K → K
-  null : K
-  ein : K
-  minus : K → K → K
-  divis : K → K → K
+class GaloisField (K : Type _) extends Field K where
   -- Characteristic `p` of field and order of prime subfield.
   char : Nat
   -- Degree `q` of field as extension field over prime subfield.
@@ -25,27 +20,6 @@ class GaloisField (K : Type _) where
   frob : K → K
 
 namespace GaloisField
-
-instance [GaloisField K] : Inhabited K where
-  default := null
-
-instance [GaloisField K] : Add K where
-  add := plus
-
-instance [GaloisField K] : Mul K where
-  mul := times
-
-instance [GaloisField K] : OfNat K (nat_lit 1) where
-  ofNat := ein
-
-instance [GaloisField K] : OfNat K (nat_lit 0) where
-  ofNat := null
-
-instance [GaloisField K] : Div K where
-  div := divis
-
-instance [GaloisField K] : Sub K where
-  sub := minus
 
 /-- An `O(log n)` implementation of `galPow` -/
 def fastPow [Mul K] [OfNat K (nat_lit 1)] (x : K) (n : Nat) : K := 
@@ -73,12 +47,6 @@ instance [GaloisField K] : Neg K where
 def order [GaloisField K] : Nat := (char K)^(deg K)
 
 instance : GaloisField (Zmod p) where
-  plus := (. + .)
-  times := (. * .)
-  null := 0
-  ein := 1
-  minus := (. - .)
-  divis := (. / .)
   char := p
   deg := 1
   frob r := r ^ p
@@ -150,7 +118,7 @@ instance [GaloisField K] [BEq K] : Mul (Extension K P) where
 
 instance [GaloisField K] : OfNat (Extension K P) (nat_lit 1) := ⟨#[1]⟩
 
-instance [GaloisField K] [BEq K]: GaloisField (Extension K P) where
+instance [GaloisField K] [BEq K] : GaloisField (Extension K P) where
   plus := polyAdd
   times := (· * ·)
   null := #[0]
