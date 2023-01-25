@@ -22,7 +22,7 @@ class PrimeField (K : Type _) extends Field K where
   s : Nat
 
   /-- Generator of the `t-order` multiplicative subgroup. -/
-  DELTA : K
+  delta : K
 
 /-- How many bits of information can be reliably stored in the field element.
   This is usually `numBits - 1`. -/
@@ -63,7 +63,7 @@ class Representation (K : Type _) (Repr : outParam $ Type _) extends PrimeField 
   TODO: IDK what I'm doing here?? -/
 class WithSmallOrderMulGroup (K : Type _) extends PrimeField K where
   /-- A field element of small multiplicative order `N`. -/
-  ZETA : K
+  zeta : K
 
 /-- This represents the bits of an element of a prime field. -/
 class PrimeFieldBits (K : Type _) extends PrimeField K where
