@@ -11,7 +11,7 @@ Here we port some definitions from https://hackage.haskell.org/package/galois-fi
 -/
 
 /-- The structure of a Galois field on t-/
-class GaloisField (K : Type _) extends Field K where
+class GaloisField (K : Type _) extends Ring K, Div K where
   -- Characteristic `p` of field and order of prime subfield.
   char : Nat
   -- Degree `q` of field as extension field over prime subfield.
@@ -105,20 +105,26 @@ def Extension.defPoly {K : Type _} [GaloisField K] {P : Polynomial K} (_ : Exten
 /-- 
 Calculates powers of polynomials
 -/
-def polyPow {K : Type _} [GaloisField K] [BEq K] : Polynomial K → Nat → Polynomial K
+def polyPow {K : Type _} [GaloisField K] : Polynomial K → Nat → Polynomial K
   | _, 0 => #[1]
   | p, k + 1 => polyMul p (polyPow p k)
 
-def polyInv {K : Type _} [GaloisField K] [BEq K] (Q P : Polynomial K) : Polynomial K :=
+def polyInv {K : Type _} [GaloisField K] (Q P : Polynomial K) : Polynomial K :=
   let (a, _, g) := polyEuc Q P
   if g == #[1] then a else #[0]
 
-instance [GaloisField K] [BEq K] : Mul (Extension K P) where
+instance [GaloisField K] : Mul (Extension K P) where
   mul := polyMul
 
 instance [GaloisField K] : OfNat (Extension K P) (nat_lit 1) := ⟨#[1]⟩
 
-instance [GaloisField K] [BEq K] : GaloisField (Extension K P) where
+instance [GaloisField K] : GaloisField (Extension K P) where
+  add := polyAdd
+  ofNat := #[0]
+  hPow := polyPow
+  sub := polySub
+  div f g := polyMul (polyInv g P) f
+  beq f g := f.norm.toArray == g.norm.toArray
   char := char K
   deg := (deg K) * degree (P)
   frob e :=

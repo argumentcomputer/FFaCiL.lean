@@ -64,10 +64,3 @@ class Representation (K : Type _) (Repr : outParam $ Type _) extends PrimeField 
 class WithSmallOrderMulGroup (K : Type _) extends PrimeField K where
   /-- A field element of small multiplicative order `N`. -/
   zeta : K
-
-/-- This represents the bits of an element of a prime field. -/
-class PrimeFieldBits (K : Type _) extends PrimeField K where
-  /-- Converts an element of the prime field into a little-endian sequence of bits. -/
-  toLEBits : K → BitArray
-  /-- Returns the bits of the field characteristic (the modulus) in little-endian order. -/
-  charLEBits : BitArray
