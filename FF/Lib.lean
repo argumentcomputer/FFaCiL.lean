@@ -24,34 +24,34 @@ class PrimeField (K : Type _) extends Field K where
   /-- Generator of the `t-order` multiplicative subgroup. -/
   delta : K
 
+  /-- The `2^s` root of unity. 
+  It can be calculated by exponentiating `multiplicativeGenerator` by `t`, where `t = (char - 1) >> s`.
+  -/
+  rootOfUnity : K
+
+variable {K : Type _} [f : PrimeField K]
+
 /-- How many bits of information can be reliably stored in the field element.
   This is usually `numBits - 1`. -/
-def capacity [PrimeField K] : Nat := PrimeField.numBits K - 1
+def capacity : Nat := PrimeField.numBits K - 1
 
-def twoInv [PrimeField K] : K := Field.inv 2
-
-/-- The `2^s` root of unity. 
-It can be calculated by exponentiating `multiplicativeGenerator` by `t`, where `t = (char - 1) >> s`.
+/--
+Inverse of `2` in the field
 -/
-def rootOfUnity [f : PrimeField K] : K :=
-  let deg := (PrimeField.char K - 1) >>> PrimeField.s K
-  @PrimeField.multiplicativeGenerator K f ^ deg
+def twoInv : K := Field.inv 2
+
+/--
+Returns true iff this element is even.
+-/
+def isEven (x : K) : Bool := x / 2 == 0
+
+/--
+Returns true iff this element is odd.
+-/
+def isOdd : K → Bool := not ∘ isEven
 
 /-- Inverse of `rootOfUnity`. -/
-def rootOfUnityInv [PrimeField K] : K := Field.inv rootOfUnity
-
-/-- TODO: move these and make more efficient -/
-partial def _root_.Nat.toUInt64sAux (n : Nat) : Array UInt64 :=
-  if n = 0 then
-    #[]
-  else 
-    (n / UInt64.size).toUInt64sAux.push n.toUInt64
-
-partial def _root_.Nat.toUInt64s (n : Nat) : Array UInt64 :=
-  if n = 0 then
-    #[0]
-  else 
-    n.toUInt64sAux
+def rootOfUnityInv : K := Field.inv PrimeField.rootOfUnity
 
 class Representation (K : Type _) (Repr : outParam $ Type _) extends PrimeField K where
   asRef : Repr → ByteArray
@@ -60,7 +60,7 @@ class Representation (K : Type _) (Repr : outParam $ Type _) extends PrimeField 
 
 /-- The subset of prime-order fields such that `(modulus - 1)` is divisible by `N`.
   If `N` is prime, there will be `N - 1` valid choices of `ZETA`.
-  TODO: IDK what I'm doing here?? -/
+-/
 class WithSmallOrderMulGroup (K : Type _) extends PrimeField K where
   /-- A field element of small multiplicative order `N`. -/
   zeta : K

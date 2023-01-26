@@ -60,7 +60,7 @@ instance : PrimeField (Zmod p) where
 
 open Polynomial
 
-/-- 
+/--
 Pre-computed evaluations of the Frobenius for a Galois field for small degree (2 and 3) extensions.
 `frobenius P Q` evaluates the Frobenius of `Q` in the extension of `K` defined by `P`. 
 -/
@@ -119,12 +119,6 @@ instance [GaloisField K] [BEq K] : Mul (Extension K P) where
 instance [GaloisField K] : OfNat (Extension K P) (nat_lit 1) := ⟨#[1]⟩
 
 instance [GaloisField K] [BEq K] : GaloisField (Extension K P) where
-  plus := polyAdd
-  times := (· * ·)
-  null := #[0]
-  ein := 1
-  minus := polySub
-  divis f g := polyMul (polyInv g P) f
   char := char K
   deg := (deg K) * degree (P)
   frob e :=
