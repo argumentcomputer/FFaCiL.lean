@@ -1,4 +1,5 @@
 import YatimaStdLib.Polynomial
+import YatimaStdLib.Ring
 import YatimaStdLib.Zmod
 import YatimaStdLib.Bit
 
@@ -10,13 +11,7 @@ Here we port some definitions from https://hackage.haskell.org/package/galois-fi
 -/
 
 /-- The structure of a Galois field on t-/
-class GaloisField (K : Type _) where
-  plus : K → K → K
-  times : K → K → K
-  null : K
-  ein : K
-  minus : K → K → K
-  divis : K → K → K
+class GaloisField (K : Type _) extends Ring K, Div K where
   -- Characteristic `p` of field and order of prime subfield.
   char : Nat
   -- Degree `q` of field as extension field over prime subfield.
@@ -25,27 +20,6 @@ class GaloisField (K : Type _) where
   frob : K → K
 
 namespace GaloisField
-
-instance [GaloisField K] : Inhabited K where
-  default := null
-
-instance [GaloisField K] : Add K where
-  add := plus
-
-instance [GaloisField K] : Mul K where
-  mul := times
-
-instance [GaloisField K] : OfNat K (nat_lit 1) where
-  ofNat := ein
-
-instance [GaloisField K] : OfNat K (nat_lit 0) where
-  ofNat := null
-
-instance [GaloisField K] : Div K where
-  div := divis
-
-instance [GaloisField K] : Sub K where
-  sub := minus
 
 /-- An `O(log n)` implementation of `galPow` -/
 def fastPow [Mul K] [OfNat K (nat_lit 1)] (x : K) (n : Nat) : K := 
@@ -73,12 +47,6 @@ instance [GaloisField K] : Neg K where
 def order [GaloisField K] : Nat := (char K)^(deg K)
 
 instance : GaloisField (Zmod p) where
-  plus := (. + .)
-  times := (. * .)
-  null := 0
-  ein := 1
-  minus := (. - .)
-  divis := (. / .)
   char := p
   deg := 1
   frob r := r ^ p
@@ -92,7 +60,7 @@ instance : PrimeField (Zmod p) where
 
 open Polynomial
 
-/-- 
+/--
 Pre-computed evaluations of the Frobenius for a Galois field for small degree (2 and 3) extensions.
 `frobenius P Q` evaluates the Frobenius of `Q` in the extension of `K` defined by `P`. 
 -/
@@ -137,26 +105,26 @@ def Extension.defPoly {K : Type _} [GaloisField K] {P : Polynomial K} (_ : Exten
 /-- 
 Calculates powers of polynomials
 -/
-def polyPow {K : Type _} [GaloisField K] [BEq K] : Polynomial K → Nat → Polynomial K
+def polyPow {K : Type _} [GaloisField K] : Polynomial K → Nat → Polynomial K
   | _, 0 => #[1]
   | p, k + 1 => polyMul p (polyPow p k)
 
-def polyInv {K : Type _} [GaloisField K] [BEq K] (Q P : Polynomial K) : Polynomial K :=
+def polyInv {K : Type _} [GaloisField K] (Q P : Polynomial K) : Polynomial K :=
   let (a, _, g) := polyEuc Q P
   if g == #[1] then a else #[0]
 
-instance [GaloisField K] [BEq K] : Mul (Extension K P) where
+instance [GaloisField K] : Mul (Extension K P) where
   mul := polyMul
 
 instance [GaloisField K] : OfNat (Extension K P) (nat_lit 1) := ⟨#[1]⟩
 
-instance [GaloisField K] [BEq K]: GaloisField (Extension K P) where
-  plus := polyAdd
-  times := (· * ·)
-  null := #[0]
-  ein := 1
-  minus := polySub
-  divis f g := polyMul (polyInv g P) f
+instance [GaloisField K] : GaloisField (Extension K P) where
+  add := polyAdd
+  ofNat := #[0]
+  hPow := polyPow
+  sub := polySub
+  div f g := polyMul (polyInv g P) f
+  beq f g := f.norm.toArray == g.norm.toArray
   char := char K
   deg := (deg K) * degree (P)
   frob e :=
