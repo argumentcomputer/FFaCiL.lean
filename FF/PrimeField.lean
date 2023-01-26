@@ -1,4 +1,3 @@
-import FF.BitVec
 import YatimaStdLib.Ring
 
 class PrimeField (K : Type _) extends Field K where
