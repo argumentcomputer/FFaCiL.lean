@@ -1,4 +1,5 @@
 import YatimaStdLib.Ring
+import YatimaStdLib.Zmod
 
 class PrimeField (K : Type _) extends Field K where
   «from» : UInt64 → K
@@ -27,6 +28,15 @@ class PrimeField (K : Type _) extends Field K where
   It can be calculated by exponentiating `multiplicativeGenerator` by `t`, where `t = (char - 1) >> s`.
   -/
   rootOfUnity : K
+
+instance : PrimeField (Zmod p) where
+  char := p
+  «from» n := Zmod.mk $ n.val % p
+  numBits := Nat.log2 ∘ Int.natAbs $ p
+  multiplicativeGenerator := sorry
+  s := sorry
+  delta := sorry
+  rootOfUnity := sorry
 
 variable {K : Type _} [f : PrimeField K]
 
