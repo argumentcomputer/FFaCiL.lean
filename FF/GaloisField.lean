@@ -1,3 +1,4 @@
+import YatimaStdLib.Nat
 import YatimaStdLib.Polynomial
 import YatimaStdLib.Ring
 import YatimaStdLib.Zmod
@@ -75,7 +76,7 @@ def frobenius [GaloisField K] [BEq K] :
     else .none
   | #[a,b], #[x,y₁,y₂,z] =>
     if y₁ == 0 && y₂ == 0 && z == 1 then
-      let (q,r) := Int.quotRem (char K) 3
+      let (q,r) := Nat.quotRem (char K) 3
       let nxq : K := (-x) ^ q
       if (char K) == 3 then .some #[frob a - frob b * x] else
       if r == 1 then .some #[frob a, frob b * nxq] else
@@ -83,7 +84,7 @@ def frobenius [GaloisField K] [BEq K] :
     else .none
   | #[a,b,c], #[x,y₁,y₂,z] =>
     if y₁ == 0 && y₂ == 0 && z == 1 then
-      let (q,r) := Int.quotRem (char K) 3
+      let (q,r) := Nat.quotRem (char K) 3
       let nxq : K := (-x) ^ q
       if (char K) == 3 then .some #[frob a - (frob b - frob c * x) * x] else
       if r == 1 then .some #[frob a, frob b * nxq, frob c * nxq * nxq] else
