@@ -1,3 +1,4 @@
+import YatimaStdLib.AddChain
 import YatimaStdLib.Zmod
 
 open Lean Syntax
@@ -16,6 +17,9 @@ doc?:optional(docComment) "new_field" name:ident "with"
     let pInv := mkIdent `pInv
     let zero := mkIdent `zero
     let one := mkIdent `one
+    let legNum := mkIdent `legNum
+    let frobAC := mkIdent `frobAC
+    let legAC := mkIdent `legAC
 
     -- Montgomery functions
     let wrap := mkIdent `wrap
@@ -32,6 +36,8 @@ doc?:optional(docComment) "new_field" name:ident "with"
     let invAux := mkIdent `invAux
     let inv := mkIdent `inv
     let sqrt? := mkIdent `sqrt?
+    let legendre := mkIdent `legendre
+    let frob := mkIdent `frob
 
     -- Syntax creation here
     `(
@@ -63,6 +69,14 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
       instance : OfNat $name (nat_lit 1) where
         ofNat := $one
+
+      def $legNum : Nat := $p >>> 1
+      
+      open AddChain in
+      def $legAC : Array ChainStep := $(mkIdent `buildSteps) $ $legNum |>.$(mkIdent `minChain) 
+
+      open AddChain in
+      def $frobAC : Array ChainStep := $(mkIdent `buildSteps) $ $p |>.$(mkIdent `minChain)
 
       /-- The Montgomery reduction algorithm -/
       def $reduce (x : Nat) : Nat :=
@@ -144,8 +158,39 @@ doc?:optional(docComment) "new_field" name:ident "with"
       instance : HPow $name Nat $name where
         hPow := $pow
 
-      private def $invAux (x : Nat) : Nat := sorry
+      def $invAux (x : Nat) : Nat := Id.run do
+        let mut (u, v, r, s, k) := ($p, x, 0, 1, 0)
 
+        while v > 0 do
+          if u % 2 == 0 then 
+            u := u >>> 1
+            s := s <<< 1
+          else if v % 2 == 0 then
+            v := v >>> 1
+            r := r <<< 1
+          else if v < u then
+            u := (u - v) >>> 1
+            r := r + s
+            s := s <<< 1
+          else if u ≤ v then
+            v := (v - u) >>> 1
+            s := s + r 
+            r := r <<< 1
+          k := k + 1
+        
+        if $p ≤ r then 
+          r := 2 * $p - r
+        else
+          r := $p - r
+
+        for _ in [1: k - 11 + 1] do
+          if r % 2 == 0 then
+            r := r >>> 1
+          else
+            r := (r + $p) >>> 1
+        
+        return r
+      
       /-- 
       Calculates the inverse of an element. If the element is wrapped, applies Montgomery inversion:
       <https://ieeexplore.ieee.org/document/403725>
@@ -153,14 +198,56 @@ doc?:optional(docComment) "new_field" name:ident "with"
       -/
       def $inv (x : $name) : $name :=
         if x.wrapped then 
-          ⟨$invAux x.data, true⟩
+          ⟨$invAux <| $reduce x.data, true⟩
         else 
           let ans := Nat.gcdA x.data $p
           let ans := if ans < 0 then ans + $p |>.toNat else ans.toNat
           ⟨ans, false⟩
+
+      instance : Square $name where
+        mul := $mul
+        square x := x * x
+
+      open Square in
+      def $legendre (x : $name) : Nat :=
+        $(mkIdent `chainExp) $legAC x |> $unwrap |>.data
       
-      def $sqrt? (x : $name) : Option $name :=
-        sorry
+      open Square in
+      def $frob (x : $name) : $name :=
+        $(mkIdent `chainExp) $frobAC x
+      
+      def $sqrt? (x : $name) : Option $ $name × $name := sorry
+        -- if $legendre x != 1 then none else Id.run do
+        -- let mut q := $p - 1
+        -- let mut s := 0
+        -- while q % 2 == 0 do
+        --   q := q / 2
+        --   s := s + 1
+        -- if s == 1 then
+        --   let r := powMod p n ((p + 1) / 4)
+        --   return some (r, p - r)
+        -- let mut zMax := 2
+        -- for z in [2 : p] do
+        --   zMax := z
+        --   if p - 1 == legendre z p then break
+        -- let mut c := powMod p zMax q
+        -- let mut r := powMod p n $ (q + 1) / 2  -- TODO : Group together these two exponetiations into a
+        -- let mut t := powMod p n q              --        bached Exp to avoid re-calculating some powers
+        -- let mut m := s
+        -- while (t - 1) % p != 0 do
+        --   let mut t2 := (t * t) % p
+        --   let mut iMax := 1
+        --   for i in [1:m] do
+        --     iMax := i
+        --     if (t2 - 1) % p == 0 then
+        --       break
+        --     t2 := (t2 * t2) % p
+        --   let b := powMod p c (2^(m - iMax - 1))
+        --   r := (r * b) % p
+        --   c := (b * b) % p
+        --   t := (t * c) % p
+        --   m := iMax
+        -- return some (r, p - r)
 
       -- Instances: 
       instance : ToString $name where
@@ -173,7 +260,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
       instance : Field $name where
         inv := $inv
-        sqrt := $sqrt?
+        sqrt := fun x => Prod.fst <$> $sqrt? x
 
       end $name
     )
@@ -198,7 +285,3 @@ end small_field_tests
 section implementation_tests
 
 end implementation_tests
-
-#eval Nat.gcdA 3 2011
-
-#eval Int.toNat (2)
