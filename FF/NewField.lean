@@ -20,6 +20,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
     let legNum := mkIdent `legNum
     let frobAC := mkIdent `frobAC
     let legAC := mkIdent `legAC
+    let twoAdicity := mkIdent `twoAdicity
 
     -- Montgomery functions
     let wrap := mkIdent `wrap
@@ -70,6 +71,9 @@ doc?:optional(docComment) "new_field" name:ident "with"
       instance : OfNat $name (nat_lit 1) where
         ofNat := $one
 
+      instance : Coe Nat $name where
+        coe n := ⟨n , false⟩
+
       def $legNum : Nat := $p >>> 1
       
       open AddChain in
@@ -77,6 +81,8 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
       open AddChain in
       def $frobAC : Array ChainStep := $(mkIdent `buildSteps) $ $p |>.$(mkIdent `minChain)
+
+      def $twoAdicity : Nat × Nat := $(mkIdent `Nat.get2Adicity) <| $p - 1 
 
       /-- The Montgomery reduction algorithm -/
       def $reduce (x : Nat) : Nat :=
@@ -158,6 +164,9 @@ doc?:optional(docComment) "new_field" name:ident "with"
       instance : HPow $name Nat $name where
         hPow := $pow
 
+      instance : BEq $name where
+        beq x y := ($wrap x).data == ($wrap y).data
+
       def $invAux (x : Nat) : Nat := Id.run do
         let mut (u, v, r, s, k) := ($p, x, 0, 1, 0)
 
@@ -216,45 +225,38 @@ doc?:optional(docComment) "new_field" name:ident "with"
       def $frob (x : $name) : $name :=
         $(mkIdent `chainExp) $frobAC x
       
-      def $sqrt? (x : $name) : Option $ $name × $name := sorry
-        -- if $legendre x != 1 then none else Id.run do
-        -- let mut q := $p - 1
-        -- let mut s := 0
-        -- while q % 2 == 0 do
-        --   q := q / 2
-        --   s := s + 1
-        -- if s == 1 then
-        --   let r := powMod p n ((p + 1) / 4)
-        --   return some (r, p - r)
-        -- let mut zMax := 2
-        -- for z in [2 : p] do
-        --   zMax := z
-        --   if p - 1 == legendre z p then break
-        -- let mut c := powMod p zMax q
-        -- let mut r := powMod p n $ (q + 1) / 2  -- TODO : Group together these two exponetiations into a
-        -- let mut t := powMod p n q              --        bached Exp to avoid re-calculating some powers
-        -- let mut m := s
-        -- while (t - 1) % p != 0 do
-        --   let mut t2 := (t * t) % p
-        --   let mut iMax := 1
-        --   for i in [1:m] do
-        --     iMax := i
-        --     if (t2 - 1) % p == 0 then
-        --       break
-        --     t2 := (t2 * t2) % p
-        --   let b := powMod p c (2^(m - iMax - 1))
-        --   r := (r * b) % p
-        --   c := (b * b) % p
-        --   t := (t * c) % p
-        --   m := iMax
-        -- return some (r, p - r)
+      def $sqrt? (x : $name) : Option $ $name × $name :=
+        if $legendre x != 1 then none else Id.run do
+        let (s, q) := $twoAdicity
+        if s == 1 then
+          let r := x ^ (($p + 1) / 4)
+          return some (r, $neg r)
+        let mut zMax := 2
+        for z in [2 : $p] do
+          zMax := z
+          if $p - 1 == $legendre z then break
+        let mut c := zMax ^ q           -- TODO : Be strategic about where to wrap (here for example)
+        let mut r := x ^ ((q + 1) / 2)  -- TODO : Group together these two exponetiations into a
+        let mut t := x ^ q              --        bached Exp to avoid re-calculating some powers
+        let mut m := s
+        while t != 1 do
+          let mut t2 := (t * t)
+          let mut iMax := 1
+          for i in [1:m] do
+            iMax := i
+            if (t2 - 1) == 0 then
+              break
+            t2 := (t2 * t2)
+          let b := c ^ (2^(m - iMax - 1))
+          r := (r * b)
+          c := (b * b)
+          t := (t * c) 
+          m := iMax
+        return some (r, $neg r)
 
       -- Instances: 
       instance : ToString $name where
         toString x := if x.wrapped then s!"{x.data}ₘ" else s!"{x.data}"
-
-      instance : BEq $name where
-        beq x y := ($wrap x).data == ($wrap y).data
       
       instance : Ring $name where
 
