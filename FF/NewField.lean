@@ -1,3 +1,4 @@
+import FF.PrimeField
 import YatimaStdLib.AddChain
 import YatimaStdLib.Zmod
 
@@ -43,13 +44,31 @@ syntax) with the following functionality:
 * Efficient implementation of the Tonelli-Shank algorithm for square roots using `NewField.sqrt?`
 -/
 
+section newfieldclass
+
+class NewField (K : Type _) extends Field K where
+  char : Nat
+  content : Nat
+  twoAdicity : Nat × Nat
+  legAC : Array ChainStep
+  frobAC : Array ChainStep
+  wrap : K → K
+  unwrap : K → K 
+  natRepr : K → Nat
+  batchedExp : K → Array Nat → Array K
+  batchedInv : Array K → Array K    
+
+end newfieldclass
+
+section metaprogramming
+
 open Lean Syntax
 
 macro (name := defineNewField)
 doc?:optional(docComment) "new_field" name:ident "with" 
-  "prime: " p:num
-  "generator: " g:num -- TODO: I want this to be optional :(
-  "root_of_unity" u:num -- TODO: This too :(
+  "prime:" p:num
+  "generator:" g:num -- TODO: I want this to be optional :(
+  "root_of_unity:" u:num -- TODO: This too :(
   : command => do
     -- Names here
     -- Pre-computed constants
@@ -69,7 +88,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
     let wrap := mkIdent `wrap
     let unwrap := mkIdent `unwrap
     let reduce := mkIdent `reduce
-    let reprNat := mkIdent `reprNat
+    let natRepr := mkIdent `natRepr
     
     -- Arithmetic operations
     let add := mkIdent `add
@@ -151,7 +170,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
         if x.wrapped then ⟨$reduce x.data, false⟩ else x
 
       /-- Unwrap and extract the `Nat` data of a field element -/
-      def $reprNat (x : $name) : Nat := x.unwrap.data
+      def $natRepr (x : $name) : Nat := x.unwrap.data
 
       /-- Field addition -/
       partial def $add (x y : $name) : $name := -- TODO: Eliminate partial
@@ -282,7 +301,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
       `p - 1 / 2`
       -/
       def $legendre (x : $name) : Nat :=
-        $(mkIdent `chainExp) $legAC x.wrap |> $reprNat
+        $(mkIdent `chainExp) $legAC x.wrap |> $natRepr
       
       open Square in
       /-- 
@@ -381,5 +400,22 @@ doc?:optional(docComment) "new_field" name:ident "with"
         inv := $inv
         sqrt := fun x => Prod.fst <$> $sqrt? x
 
+      instance : NewField $name := {
+        char := $p,
+        content := $content,
+        twoAdicity := $twoAdicity,
+        legAC := $legAC
+        frobAC := $frobAC
+        wrap := $wrap
+        unwrap := $unwrap
+        natRepr := $natRepr
+        batchedExp := $batchedExp
+        batchedInv := $batchedInv
+      }
+
+      instance : $(mkIdent `PrimeField) $name := sorry
+
       end $name
     )
+
+end metaprogramming
