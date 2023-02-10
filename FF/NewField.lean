@@ -26,6 +26,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
     let wrap := mkIdent `wrap
     let unwrap := mkIdent `unwrap
     let reduce := mkIdent `reduce
+    let reprNat := mkIdent `reprNat
     
     -- Arithmetic operations
     let add := mkIdent `add
@@ -34,6 +35,8 @@ doc?:optional(docComment) "new_field" name:ident "with"
     let sub := mkIdent `sub
     let powAux := mkIdent `powAux
     let pow := mkIdent `pow
+    let batchedExp := mkIdent `batchedExp
+    let batchedInv := mkIdent `batchedInv
     let invAux := mkIdent `invAux
     let inv := mkIdent `inv
     let sqrt? := mkIdent `sqrt?
@@ -77,12 +80,12 @@ doc?:optional(docComment) "new_field" name:ident "with"
       def $legNum : Nat := $p >>> 1
       
       open AddChain in
-      def $legAC : Array ChainStep := $(mkIdent `buildSteps) $ $legNum |>.$(mkIdent `minChain) 
+      def $legAC : Array ChainStep := $(mkIdent `buildSteps) $ $legNum |>.minChain
 
       open AddChain in
-      def $frobAC : Array ChainStep := $(mkIdent `buildSteps) $ $p |>.$(mkIdent `minChain)
+      def $frobAC : Array ChainStep := $(mkIdent `buildSteps) $ $p |>.minChain
 
-      def $twoAdicity : Nat × Nat := $(mkIdent `Nat.get2Adicity) <| $p - 1 
+      def $twoAdicity : Nat × Nat := Nat.get2Adicity <| $p - 1 
 
       /-- The Montgomery reduction algorithm -/
       def $reduce (x : Nat) : Nat :=
@@ -98,6 +101,8 @@ doc?:optional(docComment) "new_field" name:ident "with"
       /-- Bring a field element out of Montgomery form -/
       def $unwrap (x: $name) : $name := 
         if x.wrapped then ⟨$reduce x.data, false⟩ else x
+
+      def $reprNat (x : $name) : Nat := x.unwrap.data
 
       partial def $add (x y : $name) : $name := -- TODO: Eliminate partial
         match x.wrapped, y.wrapped with
@@ -219,11 +224,51 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
       open Square in
       def $legendre (x : $name) : Nat :=
-        $(mkIdent `chainExp) $legAC x |> $unwrap |>.data
+        $(mkIdent `chainExp) $legAC x.wrap |> $reprNat
       
       open Square in
       def $frob (x : $name) : $name :=
-        $(mkIdent `chainExp) $frobAC x
+        $(mkIdent `chainExp) $frobAC x.wrap
+
+      partial def $batchedExp (base : $name) (exps : Array Nat) : Array $name := Id.run do
+        let mut maxExp : Nat := exps.maxD 0
+        let size := exps.size
+        let mut exps := exps
+        let mut answer := .mkArray exps.size 1
+        let mut pow := base.wrap
+
+        while maxExp > 0 do
+          maxExp := maxExp >>> 1
+          for idx in [:size] do
+            if exps[idx]! % 2 == 1 then answer := answer.set! idx (answer[idx]! * pow)
+            exps := exps.set! idx (exps[idx]! >>> 1)
+          pow := pow * pow
+        
+        return answer
+      /-- 
+      Note: T
+      -/
+      def $batchedInv (arr : Array $name) : Array $name := Id.run do
+        let mut acc := 1
+        let mut muls := #[]
+
+        for num in arr do
+          muls := muls.push acc
+          acc := acc * num.wrap
+
+        let mut inv := $inv acc
+        let mut answer := #[]
+        let mut idx := arr.size - 1
+        let mut done := if idx == 0 then true else false
+
+        while ! done do
+          if idx == 0 then done := true
+          let temp := inv * arr[idx]!
+          answer := answer.push (inv * muls[idx]!)
+          inv := temp
+          idx := idx - 1
+
+        return answer.reverse
       
       def $sqrt? (x : $name) : Option $ $name × $name :=
         if $legendre x != 1 then none else Id.run do
@@ -236,8 +281,9 @@ doc?:optional(docComment) "new_field" name:ident "with"
           zMax := z
           if $p - 1 == $legendre z then break
         let mut c := zMax ^ q           -- TODO : Be strategic about where to wrap (here for example)
-        let mut r := x ^ ((q + 1) / 2)  -- TODO : Group together these two exponetiations into a
-        let mut t := x ^ q              --        bached Exp to avoid re-calculating some powers
+        let exps := $batchedExp x #[((q + 1) / 2), q]
+        let mut r := exps[0]!
+        let mut t := exps[1]!
         let mut m := s
         while t != 1 do
           let mut t2 := (t * t)
@@ -287,3 +333,8 @@ end small_field_tests
 section implementation_tests
 
 end implementation_tests
+
+-- Not safe when any inputs are zero
+
+-- Add in a to Nat thing, be strategic about wrapping, and then call it a day.
+-- Also add a typeclass
