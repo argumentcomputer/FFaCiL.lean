@@ -1,12 +1,55 @@
 import YatimaStdLib.AddChain
 import YatimaStdLib.Zmod
 
+/-!
+# Defining field instances with NewField
+
+The following module provides a metaprogramming layer to define new Field instances with optmized
+arithmetic.
+
+The following syntax:
+```
+new_field <name> with
+  prime: <num>
+  generator: <num>
+  root_of_unity: <num>
+```
+defines a new structure with name `<name>` representing a prime field of characteristic `prime`,
+together with a specific multiplicative generator and primitive root of unity.
+
+The implementations used for field arithmetic are based on the optimizations coming from
+Montgomery reduction and multiplication. The terminology used for NewFields is `wrap` to bring an
+element into Montgomery form and `unwrap` to bring it out.
+
+The rough idea is that, though `wrap` is as expensive as a usual modular reduction, subsequent
+multiplications, exponentiations, inversions are computationally cheaper (the other field operations
+incur no additional cost)
+
+Generally the user shouldn't have to worry about the specifics about wrapping and unwrapping field
+elements, but the `NewField.wrap` and `NewField.unwrap` functions are available to the end-user.
+
+A typeclass for `NewField` is provided (and an instance is automatically generated using the above
+syntax) with the following functionality:
+
+* Extends `PrimeField`
+* `NewField.wrap` and `NewField.unwrap` to manually deal with Montgomery form
+* Pre-computed addchains for `p`, `p - 1 / 2`
+* Efficient calculation of the Legendre symbol using `NewField.legendre` 
+  (using a pre-computed `AddChain` for `p - 1 / 2`)
+* Pre-computed 2-adicity for `p - 1`
+* Fixed-base batched exponentiation using `NewField.batchedExp`
+* Batched inversion using `NewField.batchedInv` (replaces `n` field inversions with 1 inversion and 
+  `3n` field multiplications)
+* Efficient implementation of the Tonelli-Shank algorithm for square roots using `NewField.sqrt?`
+-/
+
 open Lean Syntax
 
 macro (name := defineNewField)
 doc?:optional(docComment) "new_field" name:ident "with" 
   "prime: " p:num
-  "generator: " g:num
+  "generator: " g:num -- TODO: I want this to be optional :(
+  "root_of_unity" u:num -- TODO: This too :(
   : command => do
     -- Names here
     -- Pre-computed constants
@@ -64,11 +107,12 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
       private def $pInv : Int := Nat.xgcd $p $r |>.fst
 
+      /-- The unwrapped `0` of the field -/
       def $zero : $name := ⟨0, false⟩
 
       instance : OfNat $name (nat_lit 0) where
         ofNat := $zero
-
+      /-- The unwrapped `1` of the field -/
       def $one : $name := ⟨1, false⟩
 
       instance : OfNat $name (nat_lit 1) where
@@ -77,14 +121,18 @@ doc?:optional(docComment) "new_field" name:ident "with"
       instance : Coe Nat $name where
         coe n := ⟨n , false⟩
 
+      /-- `(p - 1) / 2` -/
       def $legNum : Nat := $p >>> 1
       
       open AddChain in
+      /-- Pre-computed array of `ChainStep`s to calculate the Legendre symbol -/
       def $legAC : Array ChainStep := $(mkIdent `buildSteps) $ $legNum |>.minChain
 
       open AddChain in
+      /-- Pre-computed array of `ChainStep`s to calculuate the Frobenius endomorphism -/
       def $frobAC : Array ChainStep := $(mkIdent `buildSteps) $ $p |>.minChain
 
+      /-- Pre-computed `(s, d)` where `p = 1 + 2 ^ s * d` with `d` odd -/
       def $twoAdicity : Nat × Nat := Nat.get2Adicity <| $p - 1 
 
       /-- The Montgomery reduction algorithm -/
@@ -102,8 +150,10 @@ doc?:optional(docComment) "new_field" name:ident "with"
       def $unwrap (x: $name) : $name := 
         if x.wrapped then ⟨$reduce x.data, false⟩ else x
 
+      /-- Unwrap and extract the `Nat` data of a field element -/
       def $reprNat (x : $name) : Nat := x.unwrap.data
 
+      /-- Field addition -/
       partial def $add (x y : $name) : $name := -- TODO: Eliminate partial
         match x.wrapped, y.wrapped with
         | true, true =>
@@ -122,6 +172,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
       instance : Add $name where
         add := $add
 
+      /-- Field multiplication-/
       partial def $mul (x y : $name) : $name := -- TODO: Eliminate partial
         match x.wrapped, y.wrapped with
         | true, true => ⟨$reduce <| x.data * y.data, true⟩
@@ -135,20 +186,22 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
       instance : Mul $name where
         mul := $mul
-
+      
+      /-- Field negation-/
       def $neg (x : $name) : $name :=
         ⟨$p - x.data, x.wrapped⟩
 
       instance : Neg $name where
         neg := $neg
 
+      /-- Field subraction -/
       def $sub (x y : $name) : $name :=
         $add x ($neg y)
 
       instance : Sub $name where
         sub := $sub
 
-      def $powAux (base : $name) (exp : Nat) : $name :=
+      private def $powAux (base : $name) (exp : Nat) : $name :=
         let rec go (base acc : $name) (exp : Nat) : $name :=
           if h : exp = 0 then acc
           else
@@ -159,6 +212,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
             else go (base * base) (acc * base) exp'
         go base 1 exp
 
+      /-- Field exponentiation -/
       def $pow (x : $name) (exp : Nat) : $name :=
         if 3 < exp then
           let x := $wrap x
@@ -172,7 +226,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
       instance : BEq $name where
         beq x y := ($wrap x).data == ($wrap y).data
 
-      def $invAux (x : Nat) : Nat := Id.run do
+      private def $invAux (x : Nat) : Nat := Id.run do
         let mut (u, v, r, s, k) := ($p, x, 0, 1, 0)
 
         while v > 0 do
@@ -223,13 +277,24 @@ doc?:optional(docComment) "new_field" name:ident "with"
         square x := x * x
 
       open Square in
+      /-- 
+      Calculates the Legendre symbol of the element `x`, using a pre-computed AddChain for 
+      `p - 1 / 2`
+      -/
       def $legendre (x : $name) : Nat :=
         $(mkIdent `chainExp) $legAC x.wrap |> $reprNat
       
       open Square in
+      /-- 
+      Calculates the Legendre symbol of the element `x`, using a pre-computed AddChain for `p`
+      -/
       def $frob (x : $name) : $name :=
         $(mkIdent `chainExp) $frobAC x.wrap
 
+      /--
+      Given a list of exponents `[e₁ e₂, ..., eₙ]` calculates 
+      `[base ^ e₁, base ^ e₂, ... , base ^ eₙ]` efficiently
+      -/
       partial def $batchedExp (base : $name) (exps : Array Nat) : Array $name := Id.run do
         let mut maxExp : Nat := exps.maxD 0
         let size := exps.size
@@ -245,8 +310,11 @@ doc?:optional(docComment) "new_field" name:ident "with"
           pow := pow * pow
         
         return answer
+      
       /-- 
-      Note: T
+      Given an array of field elements `#[x₁, x₂, ... , xₙ]` calculates `#[x₁⁻¹, x₂⁻¹, ..., xₙ⁻¹]` 
+      as a batched calculating using 1 field inversion (and `3n` field multiplications)
+      Note: Be careful to only apply to invertible elements.
       -/
       def $batchedInv (arr : Array $name) : Array $name := Id.run do
         let mut acc := 1
@@ -270,6 +338,9 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
         return answer.reverse
       
+      /--
+      Calculates the 2 square roots of `x`, or returns `none` if `x` is not a square.
+      -/
       def $sqrt? (x : $name) : Option $ $name × $name :=
         if $legendre x != 1 then none else Id.run do
         let (s, q) := $twoAdicity
@@ -312,29 +383,3 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
       end $name
     )
-
-section big_field_tests
-
-/-- A test implementation of the scalar field for BLS12_381 -/
-new_field BLS12_381 with
-  prime: 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001
-  generator: 83
-
-end big_field_tests
-
-section small_field_tests
-
-new_field SmallTest with
-  prime: 2011
-  generator: 3
-
-end small_field_tests
-
-section implementation_tests
-
-end implementation_tests
-
--- Not safe when any inputs are zero
-
--- Add in a to Nat thing, be strategic about wrapping, and then call it a day.
--- Also add a typeclass
