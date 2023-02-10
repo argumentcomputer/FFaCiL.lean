@@ -370,7 +370,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
         for z in [2 : $p] do
           zMax := z
           if $p - 1 == $legendre z then break
-        let mut c := zMax ^ q           -- TODO : Be strategic about where to wrap (here for example)
+        let mut c := zMax ^ q          -- TODO : Be strategic about where to wrap (here for example)
         let exps := $batchedExp x #[((q + 1) / 2), q]
         let mut r := exps[0]!
         let mut t := exps[1]!
