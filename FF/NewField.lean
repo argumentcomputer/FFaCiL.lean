@@ -64,12 +64,16 @@ section metaprogramming
 
 open Lean Syntax
 
-macro (name := defineNewField)
-doc?:optional(docComment) "new_field" name:ident "with" 
-  "prime:" p:num
-  "generator:" g:num -- TODO: I want this to be optional :(
-  "root_of_unity:" u:num -- TODO: This too :(
-  : command => do
+syntax (docComment)? "new_field" ident "with"
+  "prime:" num
+  ("generator:" num)?
+  ("root_of_unity:" num)? : command
+
+macro_rules
+  | `(command| $[$doc:docComment]? new_field $name:ident with
+      prime: $p:num
+      $[generator: $g:num]?
+      $[root_of_unity: $u:num]?) => do
     -- Names here
     -- Pre-computed constants
     let prime := mkIdent `prime
@@ -107,7 +111,7 @@ doc?:optional(docComment) "new_field" name:ident "with"
 
     -- Syntax creation here
     `(
-      $[$doc?:docComment]? structure $name where
+      $[$doc:docComment]? structure $name where
         data : Nat
         wrapped : Bool := Bool.false
 
