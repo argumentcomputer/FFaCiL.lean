@@ -17,11 +17,28 @@ inductive ProjectivePoint (Q : Type _) (R : Type _) where
   deriving BEq
 -/
 
+/--
+`CurvePoint` provides algebraic operations on elliptic curve points and related constants
+-/
 class CurvePoint (A : Type _) where
+  /--
+  The base point
+  -/
   base : A
+
+  /--
+  Point addition
+  -/
   addition : A → A → A
+
+  /--
+  `negate` inverses a given point
+  -/
   negate : A → A
-  isOnCurve : A → Bool
+
+  /--
+  zero element of the Abelian group of points
+  -/
   neutral : A
 
 instance [cur : CurvePoint A] : Add A where
@@ -29,6 +46,9 @@ instance [cur : CurvePoint A] : Add A where
 
 instance [cur : CurvePoint A] : Neg A where
   neg := cur.negate
+
+instance [CurvePoint A] : Sub A where
+  sub a b := a + (- b)
 
 class Curve (A : Type _) (F : Type _) [CurvePoint A] [PrimeField F] where
   mul : F → A → A 
