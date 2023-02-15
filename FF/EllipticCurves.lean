@@ -32,6 +32,11 @@ class CurvePoint (A : Type _) where
   addition : A → A → A
 
   /--
+  `double` maps (a : A) to 2 * a
+  -/
+  double : A → A 
+
+  /--
   `negate` inverses a given point
   -/
   negate : A → A
