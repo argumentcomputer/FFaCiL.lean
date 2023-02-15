@@ -135,6 +135,7 @@ macro_rules
 
       instance : OfNat $name (nat_lit 0) where
         ofNat := $zero
+
       /-- The unwrapped `1` of the field -/
       def $one : $name := ⟨1, false⟩
 
@@ -143,6 +144,9 @@ macro_rules
 
       instance : Coe Nat $name where
         coe n := ⟨n , false⟩
+
+      instance {n : Nat} : OfNat $name n where
+        ofNat := ⟨n, false⟩
 
       /-- `(p - 1) / 2` -/
       def $legNum : Nat := $p >>> 1
@@ -370,7 +374,7 @@ macro_rules
         if s == 1 then
           let r := x ^ (($p + 1) / 4)
           return some (r, $neg r)
-        let mut zMax := 2
+        let mut zMax : $name := 2
         for z in [2 : $p] do
           zMax := z
           if $p - 1 == $legendre z then break
