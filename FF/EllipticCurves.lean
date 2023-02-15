@@ -1,9 +1,10 @@
-import FF.GaloisField
+import FF.PrimeField
 
-open GaloisField
+open PrimeField
 
 namespace EllipticCurves
 
+/-
 inductive AffinePoint (Q : Type _) (R : Type _) where
   -- affine point
   | A : Q → Q → AffinePoint Q R
@@ -14,7 +15,25 @@ inductive AffinePoint (Q : Type _) (R : Type _) where
 inductive ProjectivePoint (Q : Type _) (R : Type _) where
   | P : Q → Q → Q → ProjectivePoint Q R
   deriving BEq
+-/
 
+class CurvePoint (A : Type _) where
+  base : A
+  addition : A → A → A
+  negate : A → A
+  isOnCurve : A → Bool
+  neutral : A
+
+instance [cur : CurvePoint A] : Add A where
+  add := cur.addition
+
+instance [cur : CurvePoint A] : Neg A where
+  neg := cur.negate
+
+class Curve (A : Type _) (F : Type _) [CurvePoint A] [PrimeField F] where
+  mul : F → A → A 
+
+/-
 class Curve (Q : Type _) (R : Type _) where
   char : AffinePoint Q R → Nat
   cof : AffinePoint Q R → Nat
@@ -114,5 +133,6 @@ def mulNat (p : AffinePoint Q R) (n : Nat) : AffinePoint Q R :=
 
 instance : Sub (AffinePoint Q R) where
   sub a b := add a (inv b)
+-/
 
 end EllipticCurves
