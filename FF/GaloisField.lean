@@ -117,11 +117,14 @@ def polyInv {K : Type _} [GaloisField K] (Q P : Polynomial K) : Polynomial K :=
 instance [GaloisField K] : Mul (Extension K P) where
   mul := polyMul
 
+instance [GaloisField K] : OfNat (Extension K P) (nat_lit 0) := ⟨#[0]⟩
+
 instance [GaloisField K] : OfNat (Extension K P) (nat_lit 1) := ⟨#[1]⟩
 
 instance [GaloisField K] : GaloisField (Extension K P) where
+  zero := 0
+  one := 1
   add := polyAdd
-  ofNat := #[0]
   hPow := polyPow
   sub := polySub
   div f g := polyMul (polyInv g P) f

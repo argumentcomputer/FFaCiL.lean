@@ -37,17 +37,19 @@ def capacity : Nat := PrimeField.numBits K - 1
 /--
 Inverse of `2` in the field
 -/
-def twoInv : K := Field.inv 2
+def twoInv : K := Field.inv (1 + 1)
 
-/--
+/-
 Returns true iff this element is even.
--/
-def isEven (x : K) : Bool := x / 2 == 0
 
-/--
+This is wrong, and in `PrimeField`s I'm not sure even/oddness are well-defined
+-/
+-- def isEven (x : K) : Bool := x / 2 == 0
+
+/-
 Returns true iff this element is odd.
 -/
-def isOdd : K → Bool := not ∘ isEven
+-- def isOdd : K → Bool := not ∘ isEven
 
 /-- Inverse of `rootOfUnity`. -/
 def rootOfUnityInv : K := Field.inv PrimeField.rootOfUnity
