@@ -4,9 +4,9 @@
  [{"git":
    {"url": "https://github.com/yatima-inc/YatimaStdLib.lean",
     "subDir?": null,
-    "rev": "fb121af2bedeca585d49cce55a072fe35d8a88eb",
+    "rev": "d8febaaef9a7cc28c1bb0e651ae337f09da9061a",
     "name": "YatimaStdLib",
-    "inputRev?": "fb121af2bedeca585d49cce55a072fe35d8a88eb"}},
+    "inputRev?": "d8febaaef9a7cc28c1bb0e651ae337f09da9061a"}},
   {"git":
    {"url": "https://github.com/yatima-inc/lspec/",
     "subDir?": null,

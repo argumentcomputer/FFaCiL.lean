@@ -126,6 +126,7 @@ instance [GaloisField K] : GaloisField (Extension K P) where
   one := 1
   add := polyAdd
   hPow := polyPow
+  coe n := #[n]
   sub := polySub
   div f g := polyMul (polyInv g P) f
   beq f g := f.norm.toArray == g.norm.toArray
