@@ -7,4 +7,4 @@ package FF
 lean_lib FF
 
 require YatimaStdLib from git
-  "https://github.com/yatima-inc/YatimaStdLib.lean" @ "b54637afa8b7744d74399036d80ef703e2136cc0"
+  "https://github.com/yatima-inc/YatimaStdLib.lean" @ "db19e7fda300944bb789cb77a511d442cb6f6749"

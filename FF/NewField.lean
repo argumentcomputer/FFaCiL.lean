@@ -16,7 +16,7 @@ new_field <name> with
   root_of_unity: <num>
 ```
 defines a new structure with name `<name>` representing a prime field of characteristic `prime`,
-together with a specific multiplicative generator and primitive root of unity.
+together with a specific multiplicative generator and optionally defined primitive root of unity.
 
 The implementations used for field arithmetic are based on the optimizations coming from
 Montgomery reduction and multiplication. The terminology used for NewFields is `wrap` to bring an
@@ -66,14 +66,26 @@ open Lean Syntax
 
 syntax (docComment)? "new_field" ident "with"
   "prime:" num
-  ("generator:" num)?
+  "generator:" num
   ("root_of_unity:" num)? : command
 
 macro_rules
   | `(command| $[$doc:docComment]? new_field $name:ident with
       prime: $p:num
-      $[generator: $g:num]?
-      $[root_of_unity: $u:num]?) => do
+      generator: $g:num
+      $[root_of_unity: $u?:num]?) => do
+    let pNat := p.getNat
+    let gNat := g.getNat
+    let (s, t) := (pNat - 1).get2Adicity
+
+    let u := match u? with
+      | some u => u
+      | none =>
+        let uNat := Nat.powMod pNat gNat t
+        Lean.Syntax.mkNumLit s!"{uNat}"
+    
+    let deltaNat := Nat.powMod pNat gNat s
+
     -- Names here
     -- Pre-computed constants
     let prime := mkIdent `prime
@@ -87,6 +99,8 @@ macro_rules
     let frobAC := mkIdent `frobAC
     let legAC := mkIdent `legAC
     let twoAdicity := mkIdent `twoAdicity
+    let generator := mkIdent `generator
+    let rootOfUnity := mkIdent `rootOfUnity
 
     -- Montgomery functions
     let wrap := mkIdent `wrap
@@ -109,6 +123,7 @@ macro_rules
     let legendre := mkIdent `legendre
     let frob := mkIdent `frob
 
+
     -- Syntax creation here
     `(
       $[$doc:docComment]? structure $name where
@@ -129,6 +144,10 @@ macro_rules
       def $prime : Nat := $p
 
       private def $pInv : Int := Nat.xgcd $p $r |>.fst
+
+      def $generator : $name := ⟨$g, false⟩
+
+      def $rootOfUnity : $name := ⟨$u, false⟩
 
       /-- The unwrapped `0` of the field -/
       def $zero : $name := ⟨0, false⟩
@@ -403,6 +422,8 @@ macro_rules
         toString x := if x.wrapped then s!"{x.data}ₘ" else s!"{x.data}"
       
       instance : Ring $name where
+        zero := ⟨0, false⟩
+        one := ⟨1, false⟩
 
       instance : Field $name where
         inv := $inv
@@ -421,7 +442,14 @@ macro_rules
         batchedInv := $batchedInv
       }
 
-      instance : $(mkIdent `PrimeField) $name := sorry
+      instance : $(mkIdent `PrimeField) $name where
+        «from» := fun u => ⟨u.toNat, false⟩
+        char := $prime
+        numBits := $content
+        multiplicativeGenerator := $generator
+        s := $twoAdicity |>.fst
+        delta := $(Lean.Syntax.mkNumLit s!"{deltaNat}")
+        rootOfUnity := $u
 
       end $name
     )
