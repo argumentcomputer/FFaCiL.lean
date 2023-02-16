@@ -4,9 +4,21 @@
  [{"git":
    {"url": "https://github.com/yatima-inc/YatimaStdLib.lean",
     "subDir?": null,
+<<<<<<< HEAD
     "rev": "3fd6053460b63720e619e791560435af225a44fb",
+||||||| parent of ba05a6e (have new Ring fixes)
+    "rev": "fb121af2bedeca585d49cce55a072fe35d8a88eb",
+=======
+    "rev": "d8febaaef9a7cc28c1bb0e651ae337f09da9061a",
+>>>>>>> ba05a6e (have new Ring fixes)
     "name": "YatimaStdLib",
+<<<<<<< HEAD
     "inputRev?": "3fd6053460b63720e619e791560435af225a44fb"}},
+||||||| parent of ba05a6e (have new Ring fixes)
+    "inputRev?": "fb121af2bedeca585d49cce55a072fe35d8a88eb"}},
+=======
+    "inputRev?": "d8febaaef9a7cc28c1bb0e651ae337f09da9061a"}},
+>>>>>>> ba05a6e (have new Ring fixes)
   {"git":
    {"url": "https://github.com/yatima-inc/lspec/",
     "subDir?": null,

@@ -64,7 +64,7 @@ instance {F} [PrimeField F] [Curve C F] : CurvePoint C (ProjectivePoint F) where
 
 structure BLS12381 where
 
-instance [PrimeField F] [OfNat F 4] : Curve BLS12381 F where
+instance [PrimeField F] : Curve BLS12381 F where
   a := 0
-  b := 4
+  b := (4 : Nat)
   order := 0x923480928340981
