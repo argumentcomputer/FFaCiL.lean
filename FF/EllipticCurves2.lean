@@ -2,29 +2,15 @@ import FF.NewField
 
 /-- Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b` -/
 class Curve (K : Type _) (F : outParam (Type _)) [PrimeField F] where
-  /--
-  `a` coefficient
-  -/
+  /-- `a` coefficient -/
   a : F
-
-  /--
-  `b` coefficient
-  -/
+  /-- `b` coefficient -/
   b : F
-
-  /--
-  Curve order
-  -/
+  /-- Curve order -/
   order : Nat
-
-  /--
-  Curve cofactor
-  -/
+  /-- Curve cofactor -/
   cofactor : Nat
-
-  /--
-  Curve characteristic
-  -/
+  /-- Curve characteristic -/
   characteristic : Nat
   /- More here -/
 
@@ -45,44 +31,21 @@ end Curve
 `CurvePoint` provides algebraic operations on elliptic curve points and related constants
 -/
 class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C F] where
-  /--
-  The neutral element of the Abelian group of points.
-  -/
+  /-- The neutral element of the Abelian group of points. -/
   zero : K
-  
-  /--
-  The base point.
-  -/
+  /-- The base point. -/
   base : K
-
-  /--
-  `inv` inverses a given point.
-  -/
+  /-- `inv` inverses a given point. -/
   inv : K → K
-
-  /--
-  Point addition.
-  -/
+  /-- Point addition. -/
   add : K → K → K
-
-  /--
-  `double : p ↦ 2 ⬝ p `
-  -/
-  double : K → K := fun x => add x x
-  
-  /--
-  Number-point multiplication.
-  -/
+  /-- `double : p ↦ 2 ⬝ p` -/
+  double : K → K := fun x => add x x 
+  /-- Number-point multiplication. -/
   smul : Nat → K → K
-
-  /--
-  `toPoint` form a point from prime field elements whenever it is possible
-  -/
+  /-- `toPoint` form a point from prime field elements whenever it is possible -/
   toPoint : F → F → Option K
-  
-  /--
-  Frobenius endomorphism
-  -/
+  /-- Frobenius endomorphism -/
   frobenius : F → F
 
 structure AffinePoint (F : Type _) [PrimeField F] where
