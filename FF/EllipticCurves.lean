@@ -1,163 +1,120 @@
-import FF.PrimeField
+import FF.NewField
 
-open PrimeField
+/-- Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b` -/
+class Curve (K : Type _) (F : outParam (Type _)) [PrimeField F] where
+  /-- `a` coefficient -/
+  a : F
+  /-- `b` coefficient -/
+  b : F
+  /-- Curve order -/
+  order : Nat
+  /-- Curve cofactor -/
+  cofactor : Nat
+  /-- Curve characteristic -/
+  characteristic : Nat
+  /- More here -/
 
-namespace EllipticCurves
+class EdwardsCurve (C : Type _) (F : Type _) [PrimeField F] extends Curve C F where
+  edwardsForm : F × F × F
 
-/-
-inductive AffinePoint (Q : Type _) (R : Type _) where
-  -- affine point
-  | A : Q → Q → AffinePoint Q R
-  -- infinity point
-  | O : AffinePoint Q R
-  deriving BEq
+namespace Curve
 
-inductive ProjectivePoint (Q : Type _) (R : Type _) where
-  | P : Q → Q → Q → ProjectivePoint Q R
-  deriving BEq
--/
+/-- `y² = x³ + a x + b ↦ (a, b)`   -/
+def weierstrassForm (C : Type _) [PrimeField F] [Curve C F] : F × F := 
+  (Curve.a C, Curve.b C) 
+
+def jacobianForm (C : Type _) [PrimeField F] [Curve C F] : F × F := sorry 
+
+end Curve
 
 /--
 `CurvePoint` provides algebraic operations on elliptic curve points and related constants
 -/
-class CurvePoint (A : Type _) where
-  /--
-  The base point
-  -/
-  base : A
+class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C F] where
+  /-- The neutral element of the Abelian group of points. -/
+  zero : K
+  /-- The base point. -/
+  base : K
+  /-- `inv` inverses a given point. -/
+  inv : K → K
+  /-- Point addition. -/
+  add : K → K → K
+  /-- `double : p ↦ 2 ⬝ p` -/
+  double : K → K := fun x => add x x 
+  /-- Number-point multiplication. -/
+  smul : Nat → K → K
+  /-- `toPoint` form a point from prime field elements whenever it is possible -/
+  toPoint : F → F → Option K
+  /-- Frobenius endomorphism -/
+  frobenius : F → F
 
-  /--
-  Point addition
-  -/
-  addition : A → A → A
+structure AffinePoint (F : Type _) [PrimeField F] where
+  x : F
+  y : F
+  isInfty : Bool
 
-  /--
-  `double` maps (a : A) to 2 * a
-  -/
-  double : A → A 
+structure ProjectivePoint (F : Type _) [PrimeField F] where
+  x : F
+  y : F
+  z : F
 
-  /--
-  `negate` inverses a given point
-  -/
-  negate : A → A
+def infinity [PrimeField F] : ProjectivePoint F :=
+  ProjectivePoint.mk 0 1 0
 
-  /--
-  zero element of the Abelian group of points
-  -/
-  neutral : A
+def ProjectivePoint.isInfinity {F : Type _} [PrimeField F] : ProjectivePoint F → Bool
+  | c => c.z == 0
 
-instance [cur : CurvePoint A] : Add A where
-  add := cur.addition
-
-instance [cur : CurvePoint A] : Neg A where
-  neg := cur.negate
-
-instance [CurvePoint A] : Sub A where
-  sub a b := a + (- b)
-
-class Curve (A : Type _) (F : Type _) [CurvePoint A] [PrimeField F] where
-  mul : F → A → A 
+-- P₁ : AffinePoint, P₂ : ProjectivePoint ==> P₁ + P₂
+-- (x, y) : AffinePoint => (x, y, 1) : ProjectivePoint
+-- (x, y, z) : ProjectivePoint => (x/z, y/z) : AffinePoint
+-- If z ≠ 0
+-- If z = 0
 
 /-
-class Curve (Q : Type _) (R : Type _) where
-  char : AffinePoint Q R → Nat
-  cof : AffinePoint Q R → Nat
-  isWellDefined : AffinePoint Q R → Bool
-  disc : AffinePoint Q R → Q
-  order : AffinePoint Q R → Nat
-  add : AffinePoint Q R → AffinePoint Q R → AffinePoint Q R
-  dbl : AffinePoint Q R → AffinePoint Q R
-  id : AffinePoint Q R
-  inv : AffinePoint Q R → AffinePoint Q R
-  frob : AffinePoint Q R → AffinePoint Q R
-  gen : AffinePoint Q R
-  point : Q → Q → Option (AffinePoint Q R)
-  a_ : Q
-  b_ : Q
-  h_ : Nat
-  q_ : Nat
-  r_ : Nat
-  gA_ : AffinePoint Q R
-
-open Curve AffinePoint
-
-variable {Q R : Type _}  [galq : GaloisField Q] [BEq Q] [cur : Curve Q R]
-  [Neg Q] [OfNat Q 4] [OfNat Q 27] [OfNat Q 2] [OfNat Q 3] 
-  [galr : GaloisField R] [prr : PrimeField R] [OfNat Q 0] 
-
-def char : AffinePoint Q R → Nat := fun _ => cur.q_
-
-def cof : AffinePoint Q R → Nat := fun _ => cur.h_
-
-def add (x : AffinePoint Q R) (y : AffinePoint Q R) : AffinePoint Q R  :=
-  match (x, y) with
-  | (.O, _) => .O
-  | (_, .O) => .O
-  | (.A x₁ y₁, .A x₂ y₂) =>
-    if x₁ == x₂ then .O else
-      let l := (y₁ - y₂) / (x₁ - x₂)
-      let x₃ := ((l * l) - x₁) - x₂
-      let y₃ := (l * (x₁ - x₃)) - y₁
-      .A x₃ y₃
-
-def isWellDefined : AffinePoint Q R → Bool
-    | .O => true
-    | .A x y => 
-    (((x * x) + @a_ Q R cur) * x) + cur.b_ == y * y
-
-def disc (_ : AffinePoint Q R) : Q 
-  := (((4 * cur.a_ : Q) * cur.a_) * cur.a_) + ((27 * cur.b_ : Q) * cur.b_ : Q)
-
-def order : AffinePoint Q R → Nat := fun _ => cur.r_
-
-def dbl : AffinePoint Q R → AffinePoint Q R
-  | .O => .O
-  | .A x y =>
-    if y == 0 then .O else
-    let xx := x * x
-    let l := (((xx + xx) + xx) + cur.a_) / (y + y)
-    let x' := ((l * l) - x) - x
-    let y' := (l * (x - x')) - y
-    .A x' y'
-
-def id : AffinePoint Q R := .O
-
-def inv : AffinePoint Q R → AffinePoint Q R
-  | .O => .O
-  | .A x y => .A x (-y)
-
-def frob : AffinePoint Q R → AffinePoint Q R
-  | .O => .O
-  | .A x y => .A (GaloisField.frob x) (GaloisField.frob y)
-
-def gen : AffinePoint Q R := cur.gA_
-
-def point (x : Q) (y : Q) : Option (AffinePoint Q R) :=
-  let p := AffinePoint.A x y
-  if (((x * x) + cur.a_) * x) + cur.b_ == y * y then Option.some p else none
-
-instance [BEq (AffinePoint Q R)] : Add (AffinePoint Q R) where
-  add x y := if x == y then dbl x else add x y
-
-instance : OfNat (AffinePoint Q R) 0 where
-  ofNat := cur.id
-
-open Nat in
-def mulNat (p : AffinePoint Q R) (n : Nat) : AffinePoint Q R :=
-  match h : n with
-    | 0 => id
-    | (Nat.succ k) =>
-      if k == 0 then p
-      else
-        have : n / 2 < n := 
-        div_lt_self (zero_lt_of_ne_zero (h ▸ succ_ne_zero k)) (by decide)
-        let p' := mulNat (dbl p) (n / 2)
-        let isEven n := if n % 2 == 0 then true else false
-        if isEven n then p' else add p p'
-    termination_by _ => n
-
-instance : Sub (AffinePoint Q R) where
-  sub a b := add a (inv b)
+TODO: get rid of [OfNat F 2] [OfNat F 3] somehow
 -/
+instance {F} [PrimeField F] [OfNat F 2] [OfNat F 3] [Curve C F] : CurvePoint C (AffinePoint F) where
+  base := sorry
+  zero := sorry
+  inv := sorry
+  add := fun ⟨x, y, i⟩ ⟨u, v, j⟩ => 
+    match i, j with
+    | true, true => sorry
+    | true, false => sorry
+    | false, true => sorry
+    | false, false => sorry
+  double := fun ⟨x, y, i⟩ =>
+    let lambda := (3 * x^2 + Curve.a C) / 2 * y
+    let x' := lambda^2 - 2*x
+    let y' := lambda * (x - x') - y
+    ⟨x', y', i⟩
+  smul := sorry
+  toPoint := sorry
+  frobenius := sorry
 
-end EllipticCurves
+instance {F} [PrimeField F] [Curve C F] : CurvePoint C (ProjectivePoint F) where
+  zero := sorry
+  base := sorry
+  inv := sorry
+  add := sorry
+  smul := sorry
+  toPoint := sorry
+  frobenius := sorry
+  double := sorry
+
+
+structure BLS12381 where
+
+instance [PrimeField F] : Curve BLS12381 F where
+  a := 0
+  b := (4 : Nat)
+  order := 0x923480928340981
+  cofactor := sorry
+  characteristic := sorry
+
+-- class CurveGroup (C : Type _) {F : outParam (Type _)} [PrimeField F] [Curve C F] where
+--   zero {K : Type _} [CurvePoint C K] : K
+--   gen {K : Type _} [CurvePoint C K] : K
+--   inv {K : Type _} [CurvePoint C K] : K → K
+--   double {K : Type _} [CurvePoint C K] : K → K
+--   add {K L M : Type _} [CurvePoint C K] [CurvePoint C L] [CurvePoint C M] : K → L → M
