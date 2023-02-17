@@ -27,6 +27,16 @@ def jacobianForm (C : Type _) [PrimeField F] [Curve C F] : F × F := sorry
 
 end Curve
 
+structure AffinePoint (F : Type _) [PrimeField F] where
+  x : F
+  y : F
+  isInfty : Bool
+
+structure ProjectivePoint (F : Type _) [PrimeField F] where
+  x : F
+  y : F
+  z : F
+
 /--
 `CurvePoint` provides algebraic operations on elliptic curve points and related constants
 -/
@@ -47,16 +57,7 @@ class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C 
   toPoint : F → F → Option K
   /-- Frobenius endomorphism -/
   frobenius : F → F
-
-structure AffinePoint (F : Type _) [PrimeField F] where
-  x : F
-  y : F
-  isInfty : Bool
-
-structure ProjectivePoint (F : Type _) [PrimeField F] where
-  x : F
-  y : F
-  z : F
+  
 
 def infinity [PrimeField F] : ProjectivePoint F :=
   ProjectivePoint.mk 0 1 0
@@ -70,10 +71,7 @@ def ProjectivePoint.isInfinity {F : Type _} [PrimeField F] : ProjectivePoint F �
 -- If z ≠ 0
 -- If z = 0
 
-/-
-TODO: get rid of [OfNat F 2] [OfNat F 3] somehow
--/
-instance {F} [PrimeField F] [OfNat F 2] [OfNat F 3] [Curve C F] : CurvePoint C (AffinePoint F) where
+instance {F} [PrimeField F] [Curve C F] : CurvePoint C (AffinePoint F) where
   base := sorry
   zero := sorry
   inv := sorry
@@ -84,8 +82,8 @@ instance {F} [PrimeField F] [OfNat F 2] [OfNat F 3] [Curve C F] : CurvePoint C (
     | false, true => sorry
     | false, false => sorry
   double := fun ⟨x, y, i⟩ =>
-    let lambda := (3 * x^2 + Curve.a C) / 2 * y
-    let x' := lambda^2 - 2*x
+    let lambda := ((3 : Nat) * x^2 + Curve.a C) / (2 : Nat) * y
+    let x' := lambda^2 - (2 : Nat)*x
     let y' := lambda * (x - x') - y
     ⟨x', y', i⟩
   smul := sorry
@@ -102,19 +100,9 @@ instance {F} [PrimeField F] [Curve C F] : CurvePoint C (ProjectivePoint F) where
   frobenius := sorry
   double := sorry
 
-
-structure BLS12381 where
-
-instance [PrimeField F] : Curve BLS12381 F where
-  a := 0
-  b := (4 : Nat)
-  order := 0x923480928340981
-  cofactor := sorry
-  characteristic := sorry
-
 -- class CurveGroup (C : Type _) {F : outParam (Type _)} [PrimeField F] [Curve C F] where
---   zero {K : Type _} [CurvePoint C K] : K
---   gen {K : Type _} [CurvePoint C K] : K
---   inv {K : Type _} [CurvePoint C K] : K → K
---   double {K : Type _} [CurvePoint C K] : K → K
---   add {K L M : Type _} [CurvePoint C K] [CurvePoint C L] [CurvePoint C M] : K → L → M
+  -- zero {K : Type _} [CurvePoint C K] : K
+  -- gen {K : Type _} [CurvePoint C K] : K
+  -- inv {K : Type _} [CurvePoint C K] : K → K
+  -- double {K : Type _} [CurvePoint C K] : K → K
+  -- add {K L M : Type _} [CurvePoint C K] [CurvePoint C L] [CurvePoint C M] : K → L → M
