@@ -109,3 +109,6 @@ instance [PrimeField F] : Curve BLS12381 F where
   a := 0
   b := (4 : Nat)
   order := 0x923480928340981
+  cofactor := sorry
+  characteristic := sorry
+
