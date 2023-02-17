@@ -1,10 +1,31 @@
 import FF.NewField
 
-/-- Curves with Weierstrass form-/
+/-- Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b` -/
 class Curve (K : Type _) (F : outParam (Type _)) [PrimeField F] where
+  /--
+  `a` coefficient
+  -/
   a : F
+
+  /--
+  `b` coefficient
+  -/
   b : F
+
+  /--
+  Curve order
+  -/
   order : Nat
+
+  /--
+  Curve cofactor
+  -/
+  cofactor : Nat
+
+  /--
+  Curve characteristic
+  -/
+  characteristic : Nat
   /- More here -/
 
 class EdwardsCurve (C : Type _) (F : Type _) [PrimeField F] extends Curve C F where
@@ -12,19 +33,57 @@ class EdwardsCurve (C : Type _) (F : Type _) [PrimeField F] extends Curve C F wh
 
 namespace Curve
 
-/-- `y^2 = x^3 + a x + b ↦ (a, b)`   -/
-def weierstrassForm (C : Type _) [PrimeField F] [Curve C F] : F × F := sorry 
+/-- `y² = x³ + a x + b ↦ (a, b)`   -/
+def weierstrassForm (C : Type _) [PrimeField F] [Curve C F] : F × F := 
+  (Curve.a C, Curve.b C) 
 
 def jacobianForm (C : Type _) [PrimeField F] [Curve C F] : F × F := sorry 
 
 end Curve
 
+/--
+`CurvePoint` provides algebraic operations on elliptic curve points and related constants
+-/
 class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C F] where
+  /--
+  The neutral element of the Abelian group of points.
+  -/
   zero : K
-  inv : K → K 
+  
+  /--
+  The base point.
+  -/
+  base : K
+
+  /--
+  `inv` inverses a given point.
+  -/
+  inv : K → K
+
+  /--
+  Point addition.
+  -/
   add : K → K → K
+
+  /--
+  `double : p ↦ 2 ⬝ p `
+  -/
   double : K → K := fun x => add x x
-  smul : Nat → K → K  
+  
+  /--
+  Number-point multiplication.
+  -/
+  smul : Nat → K → K
+
+  /--
+  `toPoint` form a point from prime field elements whenever it is possible
+  -/
+  toPoint : F → F → Option K
+  
+  /--
+  Frobenius endomorphism
+  -/
+  frobenius : F → F
 
 structure AffinePoint (F : Type _) [PrimeField F] where
   x : F
