@@ -95,6 +95,9 @@ structure ProjectivePoint (F : Type _) [PrimeField F] where
   y : F
   z : F
 
+def infinity [PrimeField F] : ProjectivePoint F :=
+  ProjectivePoint.mk 0 1 0
+
 def ProjectivePoint.isInfinity {F : Type _} [PrimeField F] : ProjectivePoint F → Bool
   | c => c.z == 0
 
@@ -104,7 +107,11 @@ def ProjectivePoint.isInfinity {F : Type _} [PrimeField F] : ProjectivePoint F �
 -- If z ≠ 0
 -- If z = 0
 
-instance {F} [PrimeField F] [Curve C F] : CurvePoint C (AffinePoint F) where
+/-
+TODO: get rid of [OfNat F 2] [OfNat F 3] somehow
+-/
+instance {F} [PrimeField F] [OfNat F 2] [OfNat F 3] [Curve C F] : CurvePoint C (AffinePoint F) where
+  base := sorry
   zero := sorry
   inv := sorry
   add := fun ⟨x, y, i⟩ ⟨u, v, j⟩ => 
@@ -113,13 +120,25 @@ instance {F} [PrimeField F] [Curve C F] : CurvePoint C (AffinePoint F) where
     | true, false => sorry
     | false, true => sorry
     | false, false => sorry
+  double := fun ⟨x, y, i⟩ =>
+    let lambda := (3 * x^2 + Curve.a C) / 2 * y
+    let x' := lambda^2 - 2*x
+    let y' := lambda * (x - x') - y
+    ⟨x', y', i⟩
   smul := sorry
+  toPoint := sorry
+  frobenius := sorry
 
 instance {F} [PrimeField F] [Curve C F] : CurvePoint C (ProjectivePoint F) where
   zero := sorry
+  base := sorry
   inv := sorry
   add := sorry
   smul := sorry
+  toPoint := sorry
+  frobenius := sorry
+  double := sorry
+
 
 structure BLS12381 where
 
