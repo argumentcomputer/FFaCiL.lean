@@ -28,6 +28,9 @@ class PrimeField (K : Type _) extends Field K where
   -/
   rootOfUnity : K
 
+instance [PrimeField K] : Neg K where
+  neg a := 0 - a
+
 variable {K : Type _} [f : PrimeField K]
 
 /-- How many bits of information can be reliably stored in the field element.
