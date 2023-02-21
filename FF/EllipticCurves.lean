@@ -43,14 +43,24 @@ structure ProjectivePoint (F : Type _) [PrimeField F] where
   y : F
   z : F
 
+def mapProjective [PrimeField F] [PrimeField G] (f : F → G) : ProjectivePoint F → ProjectivePoint G
+  | ⟨x, y, z⟩ => ⟨f x, f y, f z⟩
+
+def infinity [PrimeField F] : ProjectivePoint F :=
+  ProjectivePoint.mk 0 1 0
+
+def ProjectivePoint.isInfinity {F : Type _} [PrimeField F] : ProjectivePoint F → Bool
+  | c => c.z == 0
+
+def toAffine [PrimeField F] : ProjectivePoint F → AffinePoint F
+  | ⟨x, y, z⟩ => if z == 0 then ⟨0, 1, true⟩ else ⟨x / z, y / z, false⟩
+
 /--
-`CurvePoint` provides algebraic operations on elliptic curve points and related constants
+`CurvePoint` provides algebraic operations on elliptic curve points and constants.
 -/
 class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C F] where
   /-- The neutral element of the Abelian group of points. -/
   zero : K
-  /-- The base point. -/
-  base : K
   /-- `inv` inverses a given point. -/
   inv : K → K
   /-- Point addition. -/
@@ -63,19 +73,6 @@ class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C 
   toPoint : F → F → Option K
   /-- Frobenius endomorphism -/
   frobenius : K → K
-  
-
-def infinity [PrimeField F] : ProjectivePoint F :=
-  ProjectivePoint.mk 0 1 0
-
-def ProjectivePoint.isInfinity {F : Type _} [PrimeField F] : ProjectivePoint F → Bool
-  | c => c.z == 0
-
--- P₁ : AffinePoint, P₂ : ProjectivePoint ==> P₁ + P₂
--- (x, y) : AffinePoint => (x, y, 1) : ProjectivePoint
--- (x, y, z) : ProjectivePoint => (x/z, y/z) : AffinePoint
--- If z ≠ 0
--- If z = 0
 
 def affineAdd [PrimeField F] [Curve C F] : 
   AffinePoint F → AffinePoint F → AffinePoint F
@@ -111,26 +108,61 @@ def affineSmul [pr : PrimeField F] [c : Curve C F] (n : Nat) (p : AffinePoint F)
   termination_by _ => n
 
 instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (AffinePoint F) where
-  base := sorry
   zero := sorry
   inv := fun a@⟨x, y, i⟩ => if i then a else ⟨x, -y, i⟩
   add := @affineAdd F C p c
   double := @affineDouble F C p c
   smul := @affineSmul F C p c
-  toPoint a b :=
-    let p : AffinePoint F := ⟨ a, b, true ⟩
-    if (a * a + c.a * a) * a + c.b == b * b then some p else none
+  toPoint x y :=
+    let p := ⟨x, y, true⟩
+    if (x * x + c.a * x) * x + c.b == y * y then some p else none
   frobenius := mapAffine fun a => a ^ p.char
 
-instance {F} [PrimeField F] [Curve C F] : CurvePoint C (ProjectivePoint F) where
-  zero := sorry
-  base := sorry
-  inv := sorry
-  add := sorry
+instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (ProjectivePoint F) where
+  zero := infinity
+  inv := fun ⟨x, y, z⟩ => ⟨x, -y, z⟩
+  add :=
+    fun p₁@⟨x₁, y₁, z₁⟩ p₂@⟨x₂, y₂, z₂⟩ =>
+      match p₁.isInfinity, p₂.isInfinity with
+        | true, _ => infinity
+        | _, true => infinity
+        | false, false =>
+          let y₁z₂ := y₁ * z₂
+          let x₁z₂ := x₁ * z₂
+          let z₁z₂ := z₁ * z₂
+          let u := y₂ * z₁ - y₁z₂
+          let uSquare := u * u
+          let v := x₂ * z₁ - x₁z₂
+          let vSquare := v^2
+          let vCube := v^3
+          let r := vSquare * x₁z₂
+          let a := uSquare * z₁z₂ - vCube - (2 : Nat) * r
+          ⟨v * a, u * (r - a) - vCube * y₁z₂, vCube * z₁z₂⟩
   smul := sorry
-  toPoint := sorry
-  frobenius := sorry
-  double := sorry
+  toPoint x y :=
+    let p := ⟨x, y, 1⟩
+    let isDef := fun (⟨x, y, z⟩ : ProjectivePoint F) =>
+      (x * x + c.a * z * z) * x == (y * y - c.b * z * z) * z
+    if isDef p then some p else none
+  frobenius := mapProjective fun a => p.char
+  double :=
+    fun p@⟨x, y, z⟩ => if p.isInfinity then infinity
+    else
+    let xSquare := x * x
+    let zSquare := z * z
+    let w := c.a * zSquare + (3 : Nat) * xSquare
+    let s := (2 : Nat) * y * z
+    let sCube := s * s * s
+    let r := y * s
+    let rSquare := r * r
+    let xr := r + x
+    let b := xr * xr - xSquare - xr
+    let h := w * w - (2 : Nat) * c.b
+    ⟨h * s, w * (b - h) - (2 : Nat) * rSquare, sCube⟩
+
+class CurveGenerator (K : Type _) where
+  /-- The base point. -/
+  base : K
 
 -- class CurveGroup (C : Type _) {F : outParam (Type _)} [PrimeField F] [Curve C F] where
   -- zero {K : Type _} [CurvePoint C K] : K
