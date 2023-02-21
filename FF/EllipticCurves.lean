@@ -35,6 +35,9 @@ structure AffinePoint (F : Type _) [PrimeField F] where
   y : F
   isInfty : Bool
 
+def mapAffine [PrimeField F] [PrimeField G] (f : F → G) : AffinePoint F → AffinePoint G
+  | ⟨ x, y, i ⟩ => ⟨f x, f y, i⟩ 
+
 structure ProjectivePoint (F : Type _) [PrimeField F] where
   x : F
   y : F
@@ -59,7 +62,7 @@ class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C 
   /-- `toPoint` form a point from prime field elements whenever it is possible -/
   toPoint : F → F → Option K
   /-- Frobenius endomorphism -/
-  frobenius : F → F
+  frobenius : K → K
   
 
 def infinity [PrimeField F] : ProjectivePoint F :=
@@ -114,8 +117,10 @@ instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (AffinePoint F) w
   add := @affineAdd F C p c
   double := @affineDouble F C p c
   smul := @affineSmul F C p c
-  toPoint := sorry
-  frobenius := sorry
+  toPoint a b :=
+    let p : AffinePoint F := ⟨ a, b, true ⟩
+    if (a * a + c.a * a) * a + c.b == b * b then some p else none
+  frobenius := mapAffine fun a => a ^ p.char
 
 instance {F} [PrimeField F] [Curve C F] : CurvePoint C (ProjectivePoint F) where
   zero := sorry
