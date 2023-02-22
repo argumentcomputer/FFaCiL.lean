@@ -62,7 +62,7 @@ def toAffine [PrimeField F] : ProjectivePoint F → AffinePoint F
 /--
 `CurvePoint` provides algebraic operations on elliptic curve points and constants.
 -/
-class CurvePoint (F : Type _) (C : Type _) (K : Type _) [PrimeField F] [Curve C F] where
+class CurvePoint {F : Type _} (C : Type _) (K : outParam (Type _)) [PrimeField F] [Curve C F] where
   /-- The neutral element of the Abelian group of points. -/
   zero : K
   /-- `inv` inverses a given point. -/
@@ -72,8 +72,6 @@ class CurvePoint (F : Type _) (C : Type _) (K : Type _) [PrimeField F] [Curve C 
   /-- `double : p ↦ 2 ⬝ p` -/
   double : K → K := fun x => add x x 
   /-- Number-point multiplication. -/
-  smul : Nat → K → K
-  /-- `toPoint` form a point from prime field elements whenever it is possible -/
   toPoint : F → F → Option K
   /-- Frobenius endomorphism -/
   frobenius : K → K
@@ -81,8 +79,8 @@ class CurvePoint (F : Type _) (C : Type _) (K : Type _) [PrimeField F] [Curve C 
 /--
 Montgomery's ladder for fast scalar-point multiplication
 -/
-def smul' [PrimeField F] [Curve C F] 
-  [point : CurvePoint F C K] (n : Nat) (p : K) : K := Id.run do
+def smul [PrimeField F] [Curve C F] 
+  [point : CurvePoint C K] (n : Nat) (p : K) : K := Id.run do
   let mut p₁ := p
   let mut p₂ := point.double p
   let n₂ := n.toBits
@@ -115,31 +113,17 @@ def affineDouble [PrimeField F] [Curve C F] :
     let y' := lambda * (x - x') - y
     ⟨x', y', i⟩
 
-def affineSmul [pr : PrimeField F] [c : Curve C F] (n : Nat) (p : AffinePoint F) : AffinePoint F :=
-  match h : n with
-  | 0 => ⟨ 0, 1, true ⟩
-  | k + 1 =>
-  if k == 0 then p
-  else
-    have : n / 2 < n := 
-    Nat.div_lt_self (Nat.zero_lt_of_ne_zero (h ▸ Nat.succ_ne_zero k)) (by decide)
-    let p' := @affineSmul F C pr c (n / 2) (@affineDouble F C pr c p)
-    let isEven n := if n % 2 == 0 then true else false
-    if isEven n then p' else @affineAdd F C pr c p p'
-  termination_by _ => n
-
-instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint F C (AffinePoint F) where
+instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (AffinePoint F) where
   zero := sorry
   inv := fun a@⟨x, y, i⟩ => if i then a else ⟨x, -y, i⟩
   add := @affineAdd F C p c
   double := @affineDouble F C p c
-  smul := @affineSmul F C p c
   toPoint x y :=
     let p := ⟨x, y, true⟩
     if (x * x + c.a * x) * x + c.b == y * y then some p else none
   frobenius := mapAffine fun a => a ^ p.char
 
-instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint F C (ProjectivePoint F) where
+instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (ProjectivePoint F) where
   zero := infinity
   inv := fun ⟨x, y, z⟩ => ⟨x, -y, z⟩
   add :=
@@ -159,13 +143,12 @@ instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint F C (ProjectivePoin
           let r := vSquare * x₁z₂
           let a := uSquare * z₁z₂ - vCube - (2 : Nat) * r
           ⟨v * a, u * (r - a) - vCube * y₁z₂, vCube * z₁z₂⟩
-  smul := sorry
   toPoint x y :=
     let p := ⟨x, y, 1⟩
     let isDef := fun (⟨x, y, z⟩ : ProjectivePoint F) =>
       (x * x + c.a * z * z) * x == (y * y - c.b * z * z) * z
     if isDef p then some p else none
-  frobenius := mapProjective fun a => p.char
+  frobenius := mapProjective fun a => a ^ p.char
   double :=
     fun p@⟨x, y, z⟩ => if p.isInfinity then infinity
     else
