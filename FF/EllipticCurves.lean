@@ -78,14 +78,16 @@ class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C 
   /-- Frobenius endomorphism -/
   frobenius : K → K
 
+/--
+Montgomery's ladder for fast scalar-point multiplication
+-/
 def smul' [pr : PrimeField F] [cur : Curve C F] 
   [point : @CurvePoint F C K pr cur] (n : Nat) (p : K) : K := Id.run do
   let mut p₁ := p
   let mut p₂ := point.double p
   let n₂ := n.toBits
   for i in [0:n₂.length - 1] do
-    -- TODO: rewrite this line safely
-    if List.get! n₂ i == 0 then
+    if List.get? n₂ i == some 0 then
     p₁ := point.double p₁
     p₂ := point.add p₁ p₂
     else
