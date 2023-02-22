@@ -62,7 +62,7 @@ def toAffine [PrimeField F] : ProjectivePoint F → AffinePoint F
 /--
 `CurvePoint` provides algebraic operations on elliptic curve points and constants.
 -/
-class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C F] where
+class CurvePoint (F : Type _) (C : Type _) (K : Type _) [PrimeField F] [Curve C F] where
   /-- The neutral element of the Abelian group of points. -/
   zero : K
   /-- `inv` inverses a given point. -/
@@ -81,8 +81,8 @@ class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C 
 /--
 Montgomery's ladder for fast scalar-point multiplication
 -/
-def smul' [pr : PrimeField F] [cur : Curve C F] 
-  [point : @CurvePoint F C K pr cur] (n : Nat) (p : K) : K := Id.run do
+def smul' [PrimeField F] [Curve C F] 
+  [point : CurvePoint F C K] (n : Nat) (p : K) : K := Id.run do
   let mut p₁ := p
   let mut p₂ := point.double p
   let n₂ := n.toBits
@@ -128,7 +128,7 @@ def affineSmul [pr : PrimeField F] [c : Curve C F] (n : Nat) (p : AffinePoint F)
     if isEven n then p' else @affineAdd F C pr c p p'
   termination_by _ => n
 
-instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (AffinePoint F) where
+instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint F C (AffinePoint F) where
   zero := sorry
   inv := fun a@⟨x, y, i⟩ => if i then a else ⟨x, -y, i⟩
   add := @affineAdd F C p c
@@ -139,7 +139,7 @@ instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (AffinePoint F) w
     if (x * x + c.a * x) * x + c.b == y * y then some p else none
   frobenius := mapAffine fun a => a ^ p.char
 
-instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (ProjectivePoint F) where
+instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint F C (ProjectivePoint F) where
   zero := infinity
   inv := fun ⟨x, y, z⟩ => ⟨x, -y, z⟩
   add :=
