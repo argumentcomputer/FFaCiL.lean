@@ -3,6 +3,8 @@ import FF.NewField
 import Init.Data.Nat.Basic
 import Init.Data.Nat.Div
 
+import YatimaStdLib.Bit
+
 /-- Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b` -/
 class Curve (K : Type _) (F : outParam (Type _)) [PrimeField F] where
   /-- `a` coefficient -/
@@ -18,7 +20,9 @@ class Curve (K : Type _) (F : outParam (Type _)) [PrimeField F] where
   /- More here -/
 
 class EdwardsCurve (C : Type _) (F : Type _) [PrimeField F] extends Curve C F where
-  edwardsForm : F × F × F
+  A : F
+  B : F
+  C : F
 
 namespace Curve
 
@@ -73,6 +77,21 @@ class CurvePoint {F : Type _} (C : Type _) (K : Type _) [PrimeField F] [Curve C 
   toPoint : F → F → Option K
   /-- Frobenius endomorphism -/
   frobenius : K → K
+
+def smul' [pr : PrimeField F] [cur : Curve C F] 
+  [point : @CurvePoint F C K pr cur] (n : Nat) (p : K) : K := Id.run do
+  let mut p₁ := p
+  let mut p₂ := point.double p
+  let n₂ := n.toBits
+  for i in [0:n₂.length - 1] do
+    -- TODO: rewrite this line safely
+    if List.get! n₂ i == 0 then
+    p₁ := point.double p₁
+    p₂ := point.add p₁ p₂
+    else
+    p₁ := point.add p₁ p₂
+    p₂ := point.double p₂
+  return p₂
 
 def affineAdd [PrimeField F] [Curve C F] : 
   AffinePoint F → AffinePoint F → AffinePoint F
