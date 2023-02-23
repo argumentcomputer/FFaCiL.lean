@@ -6,7 +6,7 @@ import Init.Data.Nat.Div
 import YatimaStdLib.Bit
 
 /-- Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b` -/
-class Curve (K : Type _) (F : outParam (Type _)) [PrimeField F] where
+class Curve (K : Type _) (F : outParam (Type _)) where
   /-- `a` coefficient -/
   a : F
   /-- `b` coefficient -/
@@ -18,6 +18,9 @@ class Curve (K : Type _) (F : outParam (Type _)) [PrimeField F] where
   /-- Curve characteristic -/
   characteristic : Nat
   /- More here -/
+
+def printCurve [Curve K F] [ToString F] : String :=
+  "y² = x³ + " ++ toString (Curve.a K) ++ "x + " ++ toString (Curve.b K)
 
 class EdwardsCurve (C : Type _) (F : Type _) [PrimeField F] extends Curve C F where
   A : F
@@ -62,7 +65,7 @@ def toAffine [PrimeField F] : ProjectivePoint F → AffinePoint F
 /--
 `CurvePoint` provides algebraic operations on elliptic curve points and constants.
 -/
-class CurvePoint {F : Type _} (C : Type _) (K : outParam (Type _)) [PrimeField F] [Curve C F] where
+class CurvePoint {F : Type _} (C : Type _) (K : outParam $ Type _) [PrimeField F] [Curve C F] where
   /-- The neutral element of the Abelian group of points. -/
   zero : K
   /-- `inv` inverses a given point. -/
@@ -113,7 +116,7 @@ def affineDouble [PrimeField F] [Curve C F] :
     let y' := lambda * (x - x') - y
     ⟨x', y', i⟩
 
-instance {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (AffinePoint F) where
+instance aff {F} [p : PrimeField F] [c : Curve C F] : CurvePoint C (AffinePoint F) where
   zero := sorry
   inv := fun a@⟨x, y, i⟩ => if i then a else ⟨x, -y, i⟩
   add := @affineAdd F C p c
