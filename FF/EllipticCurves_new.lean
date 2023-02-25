@@ -50,8 +50,17 @@ inductive AffinePoint {F : Type _} [Field F] (C : Curve F) where
   | affine (X : F) (Y : F) : AffinePoint C
   | infinity : AffinePoint C
 
+def AffinePoint.add {F : Type _} [Field F] {C : Curve F} : AffinePoint C → AffinePoint C → AffinePoint C
+  | .infinity, _ => .infinity
+  | _, .infinity => .infinity
+  | .affine x₁ y₁, .affine x₂ y₂ =>
+      let lambda := (y₁ + y₂) / (x₁ + y₂)
+      let x₃ := lambda^2 + lambda + x₁ + x₂ + Curve.a C
+      let y₃ := lambda * (x₁ + x₃) + x₃ + x₁
+      .affine x₃ y₃
+
 class CurveGroup {F : Type _} [Field F] (C : Curve F) (K : Type _) where 
-  zero : K 
+  zero : K
   inv : K → K
   add : K → K → K
   scale : Nat → K → K  
@@ -74,8 +83,11 @@ instance {F : Type _} [Field F] {C : Curve F} : CurveGroup C (ProjectivePoint C)
 
 instance {F : Type _} [Field F] {C : Curve F} : CurveGroup C (AffinePoint C) where 
   zero := .infinity
-  inv := sorry
-  add := sorry
+  inv p :=
+    match p with
+      | .affine X Y => .affine X (0 - Y)
+      | x           => x
+  add := AffinePoint.add
   scale := sorry
 
 abbrev Fp := Zmod 101
