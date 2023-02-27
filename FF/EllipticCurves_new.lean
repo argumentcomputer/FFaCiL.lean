@@ -1,7 +1,5 @@
 import FF.NewField
 
-import YatimaStdLib.Bit
-
 /--
 Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b`
 for a prime field `F` such that `char K > 3`
@@ -78,33 +76,19 @@ instance {F K : Type _} [PrimeField F] (C : Curve F) [CurveGroup C K] : Neg K wh
   neg := CurveGroup.inv C
 
 open CurveGroup in
-partial def smulAux [PrimeField F] {C : Curve F}
+partial def smulAux [PrimeField F] (C : Curve F)
   [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
   if n == 0 then acc
   else match n % 2 == 0 with
-    | true => @smulAux _ _ _ C _ (n >>> 1) (add C p p) (add C p acc)
-    | false => @smulAux _ _ _ C _ (n >>> 1) (add C p p) acc
+    | true => smulAux C (n >>> 1) (add C p p) (add C p acc)
+    | false => smulAux C (n >>> 1) (add C p p) acc
 
 open CurveGroup in
 /--
 Montgomery's ladder for fast scalar-point multiplication
 -/
 def smul [PrimeField F] {C : Curve F}
-  [CurveGroup C K] (n : Nat) (p : K) : K := Id.run do
-  @smulAux _ _ _ C _ n p (zero C)
-/--
-  let mut p₁ := p
-  let mut p₂ := double C p
-  let n₂ := n.toBits
-  for i in [0:n₂.length - 1] do
-    if List.get? n₂ i == some 0 then
-    p₁ := double C p₁
-    p₂ := add C p₁ p₂
-    else
-    p₁ := add C p₁ p₂
-    p₂ := double C p₂
-  return p₂
--/
+  [CurveGroup C K] (n : Nat) (p : K) : K := smulAux C n p (zero C)
 
 instance {F K : Type _} [f : PrimeField F] (C : Curve F) [gr : CurveGroup C K] : HMul Nat K K where
   hMul := @smul F K f C gr
@@ -141,7 +125,7 @@ instance {F : Type _} [PrimeField F] {C : Curve F} : CurveGroup C (AffinePoint C
   zero := .infinity
   inv p :=
     match p with
-      | .affine X Y => .affine X (0 - Y)
+      | .affine X Y => .affine X (- Y)
       | x           => x
   add := AffinePoint.add
   double := affineDouble
