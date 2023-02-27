@@ -74,11 +74,21 @@ instance {F K : Type _} [PrimeField F] (C : Curve F) [CurveGroup C K] : Neg K wh
   neg := CurveGroup.inv C
 
 open CurveGroup in
+partial def smulAux [PrimeField F] {C : Curve F}
+  [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
+  if n == 0 then acc
+  else match n % 2 == 0 with
+    | true => @smulAux _ _ _ C _ (n >>> 1) (add C p p) (add C p acc)
+    | false => @smulAux _ _ _ C _ (n >>> 1) (add C p p) acc
+
+open CurveGroup in
 /--
 Montgomery's ladder for fast scalar-point multiplication
 -/
 def smul [PrimeField F] {C : Curve F}
   [CurveGroup C K] (n : Nat) (p : K) : K := Id.run do
+  @smulAux _ _ _ C _ n p (zero C)
+/--
   let mut p₁ := p
   let mut p₂ := double C p
   let n₂ := n.toBits
@@ -90,6 +100,7 @@ def smul [PrimeField F] {C : Curve F}
     p₁ := add C p₁ p₂
     p₂ := double C p₂
   return p₂
+-/
 
 instance {F K : Type _} [f : PrimeField F] (C : Curve F) [gr : CurveGroup C K] : HMul Nat K K where
   hMul := @smul F K f C gr
@@ -144,9 +155,9 @@ def NewCurve : Curve Fp where
 
 def G : ProjectivePoint NewCurve := ⟨52, 74, 1⟩
 
-#eval (G + G) + G
+#eval G + G + G
 def mulBy2 := ProjectivePoint.scaleAux 2 G .infinity
 #eval mulBy2
 
-#eval 2 * G
+#eval 3 * G
 #eval CurveGroup.double NewCurve G
