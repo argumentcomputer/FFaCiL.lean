@@ -2,6 +2,10 @@ import FF.NewField
 
 import YatimaStdLib.Bit
 
+/--
+Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b`
+for a prime field `F` such that `char K > 3`
+-/
 structure Curve (F : Type _) [PrimeField F] where
   a : F
   b : F
@@ -33,8 +37,8 @@ def ProjectivePoint.add {F : Type _} [PrimeField F] {C : Curve F} (P Q : Project
         let u := y₂ * z₁ - y₁z₂
         let uSquare := u * u
         let v := x₂ * z₁ - x₁z₂
-        let vSquare := v^2
-        let vCube := v^3
+        let vSquare := v * v
+        let vCube := vSquare * v
         let r := vSquare * x₁z₂
         let a := uSquare * z₁z₂ - vCube - (2 : Nat) * r
         ⟨v * a, u * (r - a) - vCube * y₁z₂, vCube * z₁z₂⟩
@@ -120,7 +124,7 @@ instance {F : Type _} [PrimeField F] {C : Curve F} : CurveGroup C (ProjectivePoi
     let r := y * s
     let rSquare := r * r
     let xr := r + x
-    let b := xr * xr - xSquare - xr
+    let b := xr * xr - xSquare - rSquare
     let h := w * w - (2 : Nat) * C.b
     ⟨h * s, w * (b - h) - (2 : Nat) * rSquare, sCube⟩
 
@@ -159,5 +163,5 @@ def G : ProjectivePoint NewCurve := ⟨52, 74, 1⟩
 def mulBy2 := ProjectivePoint.scaleAux 2 G .infinity
 #eval mulBy2
 
-#eval 3 * G
+#eval 2 * G
 #eval CurveGroup.double NewCurve G
