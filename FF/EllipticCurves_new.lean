@@ -59,6 +59,8 @@ class CurveGroup {F : Type _} [PrimeField F] (C : Curve F) (K : outParam $ Type 
   inv : K → K
   add : K → K → K
   double : K → K
+  toPoint : F → F → Option K
+  frobenius : K → K
 
 instance {F K : Type _} [PrimeField F] (C : Curve F) [CurveGroup C K] : Add K where
   add := CurveGroup.add C
@@ -71,8 +73,8 @@ partial def smulAux [PrimeField F] (C : Curve F)
   [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
   if n == 0 then acc
   else match n % 2 == 0 with
-    | true => smulAux C (n >>> 1) (add C p p) (add C p acc)
-    | false => smulAux C (n >>> 1) (add C p p) acc
+    | true => smulAux C (n >>> 1) (double C p) (add C p acc)
+    | false => smulAux C (n >>> 1) (double C p) acc
 
 open CurveGroup in
 /--
@@ -98,6 +100,15 @@ instance {F : Type _} [PrimeField F] {C : Curve F} : CurveGroup C (ProjectivePoi
     let y₁ := a * ((4 : Nat) * c - d) - b^3 * y * z
     let z₁ := (8 : Nat) * b^3
     ⟨x₁, y₁, z₁⟩
+  toPoint x y :=
+    let p := ⟨x, y, 1⟩
+    let isDef := fun (⟨x, y, z⟩ : ProjectivePoint C) =>
+      (x * x + C.a * z * z) * x == (y * y - C.b * z * z) * z
+    if isDef p then some p else none
+  frobenius :=
+    fun ⟨x, y, z⟩ =>
+    let frob := fun (x : F) => x^(PrimeField.char F)
+    ⟨ frob x, frob y, frob z⟩
 
 def affineDouble [PrimeField F] {C : Curve F} :
   AffinePoint C → AffinePoint C
@@ -116,6 +127,13 @@ instance {F : Type _} [PrimeField F] {C : Curve F} : CurveGroup C (AffinePoint C
       | x           => x
   add := AffinePoint.add
   double := affineDouble
+  toPoint x y :=
+    let p := .affine x y
+    if (x * x + C.a * x) * x + C.b == y * y then some p else none
+  frobenius p :=
+    match p with
+      | .infinity => .infinity
+      | .affine x y => .affine (x^(PrimeField.char F)) (y^(PrimeField.char F))
 
 new_field Fp with
   prime: 101
@@ -128,11 +146,12 @@ def NewCurve : Curve Fp where
   a := 2
   b := 3  
 
-def G : ProjectivePoint NewCurve := ⟨52, 74, 1⟩
+def G₁ : ProjectivePoint NewCurve := ⟨52, 34, 1⟩
+def G₂ : ProjectivePoint NewCurve := ⟨21, 9, 1⟩
 
-#eval G + G
-def mulBy2 := ProjectivePoint.scaleAux 2 G .infinity
+#eval G₁ + G₂
+def mulBy2 := ProjectivePoint.scaleAux 2 G₁ .infinity
 #eval mulBy2
 
-#eval 2 * G
-#eval CurveGroup.double NewCurve G
+#eval 2 * G₂
+#eval CurveGroup.double NewCurve G₂
