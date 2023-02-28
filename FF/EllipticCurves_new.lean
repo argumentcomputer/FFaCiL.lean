@@ -12,6 +12,7 @@ structure ProjectivePoint {F : Type _} [PrimeField F] (C : Curve F) where
   X : F
   Y : F
   Z : F
+  deriving BEq
 
 instance [ToString F] [PrimeField F] {C : Curve F} : ToString $ ProjectivePoint C where
   toString := fun ⟨x, y, z⟩ => s!"({x} : {y} : {z})"
@@ -22,7 +23,20 @@ def ProjectivePoint.isInfinity {F : Type _} [PrimeField F] {C : Curve F} (P : Pr
 def ProjectivePoint.infinity {F : Type _} [PrimeField F] {C : Curve F} : ProjectivePoint C :=
   ⟨0, 1, 0⟩
 
-def ProjectivePoint.add {F : Type _} [PrimeField F] {C : Curve F} : ProjectivePoint C → ProjectivePoint C → ProjectivePoint C
+def ProjectivePoint.double [PrimeField F] {C : Curve F} : ProjectivePoint C → ProjectivePoint C
+  | ⟨x, y, z⟩ =>
+    let a := C.a * z^2 + (3 : Nat) * x^2
+    let b := y * z
+    let c := x * y * b
+    let d := a^2 - (8 : Nat) * c
+    let x₁ := (2 : Nat) * b * d
+    let y₁ := a * ((4 : Nat) * c - d) - b^3 * y * z
+    let z₁ := (8 : Nat) * b^3
+    ⟨x₁, y₁, z₁⟩
+
+def ProjectivePoint.add {F : Type _} [PrimeField F] {C : Curve F} (p₁ p₂ : ProjectivePoint C) : ProjectivePoint C :=
+  if p₁ == p₂ then ProjectivePoint.double p₁ else
+  match p₁, p₂ with
   | ⟨x₁, y₁, z₁⟩, ⟨x₂, y₂, z₂⟩ => 
     let a := y₂ * z₁ - y₁ * z₂
     let b := x₂ * z₁ - x₁ * z₂
@@ -91,15 +105,7 @@ instance {F : Type _} [PrimeField F] {C : Curve F} : CurveGroup C (ProjectivePoi
   zero := infinity
   inv := fun ⟨x, y, z⟩ => ⟨x, 0 - y, z⟩ 
   add := ProjectivePoint.add
-  double := fun ⟨x, y, z⟩ =>
-    let a := C.a * z^2 + (3 : Nat) * x^2
-    let b := y * z
-    let c := x * y * b
-    let d := a^2 - (8 : Nat) * c
-    let x₁ := (2 : Nat) * b * d
-    let y₁ := a * ((4 : Nat) * c - d) - b^3 * y * z
-    let z₁ := (8 : Nat) * b^3
-    ⟨x₁, y₁, z₁⟩
+  double := ProjectivePoint.double
   toPoint x y :=
     let p := ⟨x, y, 1⟩
     let isDef := fun (⟨x, y, z⟩ : ProjectivePoint C) =>
