@@ -22,24 +22,15 @@ def ProjectivePoint.isInfinity {F : Type _} [PrimeField F] {C : Curve F} (P : Pr
 def ProjectivePoint.infinity {F : Type _} [PrimeField F] {C : Curve F} : ProjectivePoint C :=
   ⟨0, 1, 0⟩
 
-def ProjectivePoint.add {F : Type _} [PrimeField F] {C : Curve F} (P Q : ProjectivePoint C) : ProjectivePoint C :=
-  let ⟨x₁, y₁, z₁⟩ := P
-  let ⟨x₂, y₂, z₂⟩ := Q
-    match P.isInfinity, Q.isInfinity with
-      | true, _ => Q
-      | _, true => P
-      | false, false =>
-        let y₁z₂ := y₁ * z₂
-        let x₁z₂ := x₁ * z₂
-        let z₁z₂ := z₁ * z₂
-        let u := y₂ * z₁ - y₁z₂
-        let uSquare := u * u
-        let v := x₂ * z₁ - x₁z₂
-        let vSquare := v * v
-        let vCube := vSquare * v
-        let r := vSquare * x₁z₂
-        let a := uSquare * z₁z₂ - vCube - (2 : Nat) * r
-        ⟨v * a, u * (r - a) - vCube * y₁z₂, vCube * z₁z₂⟩
+def ProjectivePoint.add {F : Type _} [PrimeField F] {C : Curve F} : ProjectivePoint C → ProjectivePoint C → ProjectivePoint C
+  | ⟨x₁, y₁, z₁⟩, ⟨x₂, y₂, z₂⟩ => 
+    let a := y₂ * z₁ - y₁ * z₂
+    let b := x₂ * z₁ - x₁ * z₂
+    let c := a^2 * z₁ * z₂ - b^3 - (2 : Nat) * b^2 * x₁ * z₂
+    let x₃ := b * c
+    let y₃ := a * (b^2 * x₁ * z₂ - c) - b^3 * y₁ * z₂
+    let z₃ := b^3 * z₁ * z₂
+    ⟨x₃, y₃, z₃⟩
 
 partial def ProjectivePoint.scaleAux {F : Type _} [PrimeField F] {C : Curve F} (n : Nat) 
   (P acc : ProjectivePoint C) : ProjectivePoint C :=
@@ -98,19 +89,15 @@ instance {F : Type _} [PrimeField F] {C : Curve F} : CurveGroup C (ProjectivePoi
   zero := infinity
   inv := fun ⟨x, y, z⟩ => ⟨x, 0 - y, z⟩ 
   add := ProjectivePoint.add
-  double := fun p@⟨x, y, z⟩ => if p.isInfinity then infinity
-    else
-    let xSquare := x * x
-    let zSquare := z * z
-    let w := C.a * zSquare + (3 : Nat) * xSquare
-    let s := (2 : Nat) * y * z
-    let sCube := s * s * s
-    let r := y * s
-    let rSquare := r * r
-    let xr := r + x
-    let b := xr * xr - xSquare - rSquare
-    let h := w * w - (2 : Nat) * C.b
-    ⟨h * s, w * (b - h) - (2 : Nat) * rSquare, sCube⟩
+  double := fun ⟨x, y, z⟩ =>
+    let a := C.a * z^2 + (3 : Nat) * x^2
+    let b := y * z
+    let c := x * y * b
+    let d := a^2 - (8 : Nat) * c
+    let x₁ := (2 : Nat) * b * d
+    let y₁ := a * ((4 : Nat) * c - d) - b^3 * y * z
+    let z₁ := (8 : Nat) * b^3
+    ⟨x₁, y₁, z₁⟩
 
 def affineDouble [PrimeField F] {C : Curve F} :
   AffinePoint C → AffinePoint C
@@ -143,7 +130,7 @@ def NewCurve : Curve Fp where
 
 def G : ProjectivePoint NewCurve := ⟨52, 74, 1⟩
 
-#eval G + G + G
+#eval G + G
 def mulBy2 := ProjectivePoint.scaleAux 2 G .infinity
 #eval mulBy2
 
