@@ -48,6 +48,8 @@ def isInfinity (P : ProjectivePoint C) := P.X == 0 && P.Y == 1 && P.Z == 0
 
 def infinity : ProjectivePoint C := ⟨0, 1, 0⟩
 
+abbrev zero : ProjectivePoint C := infinity
+
 instance : Inhabited $ ProjectivePoint C where
   default := infinity  
 
@@ -143,7 +145,9 @@ inductive AffinePoint {F : Type _} [Field F] (C : Curve F) where
   | affine (X : F) (Y : F) : AffinePoint C
   | infinity : AffinePoint C
 
-def AffinePoint.add {F : Type _} [Field F] {C : Curve F} 
+namespace AffinePoint
+
+def add {F : Type _} [Field F] {C : Curve F} 
   : AffinePoint C → AffinePoint C → AffinePoint C
     | .infinity, _ => .infinity
     | _, .infinity => .infinity
@@ -152,6 +156,17 @@ def AffinePoint.add {F : Type _} [Field F] {C : Curve F}
         let x₃ := lambda^2 + lambda + x₁ + x₂ + Curve.a C
         let y₃ := lambda * (x₁ + x₃) + x₃ + x₁
         .affine x₃ y₃
+
+def double [Field F] {C : Curve F} :
+  AffinePoint C → AffinePoint C
+  | .affine x y =>
+    let lambda := ((3 : Nat) * x^2 + Curve.a C) / (2 : Nat) * y
+    let x' := lambda^2 - (2 : Nat) * x
+    let y' := lambda * (x - x') - y
+    .affine x' y'
+  | .infinity => .infinity
+
+end AffinePoint
 
 class CurveGroup {F : Type _} [Field F] (C : Curve F) (K : outParam $ Type _) where 
   zero : K
@@ -180,8 +195,7 @@ open CurveGroup in
 /--
 Montgomery's ladder for fast scalar-point multiplication
 -/
-def smul [Field F] (C : Curve F)
-  [CurveGroup C K] (n : Nat) (p : K) : K := smulAux C n p (zero C)
+def smul [Field F] (C : Curve F) [CurveGroup C K] (n : Nat) (p : K) : K := smulAux C n p (zero C)
 
 instance {F K : Type _} [Field F] (C : Curve F) [CurveGroup C K] : HMul Nat K K where
   hMul := smul C 
@@ -202,23 +216,15 @@ instance {F : Type _} [Field F] {C : Curve F} : CurveGroup C (ProjectivePoint C)
   --   let frob := fun (x : F) => x^(Field.char F)
   --   ⟨ frob x, frob y, frob z⟩
 
-def affineDouble [Field F] {C : Curve F} :
-  AffinePoint C → AffinePoint C
-  | .affine x y =>
-    let lambda := ((3 : Nat) * x^2 + Curve.a C) / (2 : Nat) * y
-    let x' := lambda^2 - (2 : Nat) * x
-    let y' := lambda * (x - x') - y
-    .affine x' y'
-  | .infinity => .infinity
-
+open AffinePoint in
 instance {F : Type _} [Field F] {C : Curve F} : CurveGroup C (AffinePoint C) where 
   zero := .infinity
   inv p :=
     match p with
       | .affine X Y => .affine X (- Y)
       | x           => x
-  add := AffinePoint.add
-  double := affineDouble
+  add := add
+  double := double
   -- toPoint x y :=
   --   let p := .affine x y
   --   if (x * x + C.a * x) * x + C.b == y * y then some p else none
