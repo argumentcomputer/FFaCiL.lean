@@ -47,10 +47,13 @@ variable {F : Type _} [Field F] {C : Curve F}
 def scale (f : F) : ProjectivePoint C → ProjectivePoint C
   | ⟨x, y, z⟩ => ⟨f * x, f * y, f * z⟩
 
+instance : HMul F (ProjectivePoint C) (ProjectivePoint C) where
+  hMul := scale
+
 def norm : ProjectivePoint C → ProjectivePoint C
   | P@⟨_, y, z⟩ =>
-    if z != 0 then P.scale z⁻¹ else
-    if y != 0 then P.scale y⁻¹ else
+    if z != 0 then z⁻¹ * P else
+    if y != 0 then y⁻¹ * P else
     ⟨1, 0, 0⟩
 
 instance  : BEq $ ProjectivePoint C where
