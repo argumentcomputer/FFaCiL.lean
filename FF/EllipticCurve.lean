@@ -44,6 +44,21 @@ namespace ProjectivePoint
 
 variable {F : Type _} [Field F] {C : Curve F}
 
+def isInfinity (P : ProjectivePoint C) := P.X == 0 && P.Y == 1 && P.Z == 0
+
+def infinity : ProjectivePoint C := ⟨0, 1, 0⟩
+
+instance : Inhabited $ ProjectivePoint C where
+  default := infinity  
+
+def onCurve (C : Curve F) (x y z : F) : Bool := z * y^2 == x^3 + C.a * x * z^2 + C.b * z^3
+
+def mk? (x y z : F) : Option $ ProjectivePoint C :=
+  if onCurve C x y z then some ⟨x, y, z⟩ else none
+
+def mkD (x y z : F) : ProjectivePoint C :=
+  if onCurve C x y z then ⟨x, y, z⟩ else default
+
 def scale (f : F) : ProjectivePoint C → ProjectivePoint C
   | ⟨x, y, z⟩ => ⟨f * x, f * y, f * z⟩
 
@@ -65,56 +80,62 @@ instance  : BEq $ ProjectivePoint C where
 instance [ToString F] : ToString $ ProjectivePoint C where
   toString := fun ⟨x, y, z⟩ => s!"({x} : {y} : {z})"
 
-def isInfinity (P : ProjectivePoint C) := P.X == 0 && P.Y == 1 && P.Z == 0
-
-def infinity : ProjectivePoint C := ⟨0, 1, 0⟩
-
-def double (p : ProjectivePoint C) : ProjectivePoint C :=
+def double (p : ProjectivePoint C) : ProjectivePoint C := Id.run do
   let a := C.a
   let b := C.b
-  match p with
-  | ⟨x, y, z⟩ =>
-    let x₁ :=
-      (2 : Nat) * x * y * (y^2 - (2 : Nat) * a * x * z - (3 : Nat) * b * z^2) -
-      (2 : Nat) * y * z * (a * x^2 + (6 : Nat) * b * x * z - a^2 * z^2)
-    let y₁ := (y^2 + (2 : Nat) * x * z + (3 : Nat) * b * z^2) *
-      (y^2 - (2 : Nat) * x * z - (3 : Nat) * b * z^2) +
-      (a * x^2 + (6 : Nat) * b * x * z - a^2 * z^2) * ((3 : Nat) * x^2 + a * z^2)
-    let z₁ := (8 : Nat) * y^3 * z
-    ⟨x₁, y₁, z₁⟩
+  let b₃ := (3 : Nat) * b
+  let ⟨X, Y, Z⟩ := p
+  let mut (t₀, t₁, t₂, t₃) := (X * X, Y * Y, Z * Z, X * Y)
+  t₃ := t₃ + t₃
+  let mut Z₃ := X * Z
+  Z₃ := Z₃ + Z₃
+  let mut X₃ := a * Z₃
+  let mut Y₃ := b₃ * t₂
+  Y₃ := X₃ + Y₃
+  X₃ := t₁ - Y₃
+  Y₃ := t₁ + Y₃
+  Y₃ := X₃ * Y₃
+  X₃ := t₃ * X₃
+  Z₃ := b₃ * Z₃
+  t₂ := a * t₂
+  t₃ := t₀ - t₂
+  t₃ := a * t₃
+  t₃ := t₃ + Z₃
+  Z₃ := t₀ + t₀
+  t₀ := Z₃ + t₀
+  t₀ := t₀ + t₂
+  t₀ := t₀ * t₃
+  Y₃ := Y₃ + t₀
+  t₂ := Y * Z
+  t₂ := t₂ + t₂
+  t₀ := t₂ * t₃
+  X₃ := X₃ - t₀
+  Z₃ := t₂ * t₁
+  Z₃ := Z₃ + Z₃
+  Z₃ := Z₃ + Z₃
+  return ⟨X₃, Y₃, Z₃⟩
 
-def add (p₁ p₂ : ProjectivePoint C) 
-  : ProjectivePoint C :=
-    let a := C.a
-    let b := C.b
-    match p₁, p₂ with
-    | ⟨x₁, y₁, z₁⟩, ⟨x₂, y₂, z₂⟩ =>
-      let z₁z₂ := z₁ * z₂
-      let x₁z₂x₂z₁ := x₁ * z₂ + x₂ * z₁
-      let ax₁z₂x₂z₁ := a * x₁z₂x₂z₁
-      let b3 := (3 : Nat) * b
-      let t₁ := b3 * x₁z₂x₂z₁ - a^2 * z₁z₂
-      let x₃ :=
-        (x₁ * y₂ + x₂ * y₁) * 
-        (y₂ * y₁ - ax₁z₂x₂z₁ - b3 * z₁z₂) -
-        (y₁ * z₂ + y₂ * z₁) *
-        (a * x₁ * x₂ + t₁)
-      let y₃ := ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂) *
-        (a * x₁ * x₂ + t₁) +
-        (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) * (y₁ * y₂ - ax₁z₂x₂z₁ - b3 * z₁z₂)
-      let z₃ := (y₁ * z₂ + y₂ * z₁) * (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) +
-        (x₁ * y₂ + x₂ * y₁) * ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂)
-      ⟨x₃, y₃, z₃⟩
-
-/-
-      let a := y₂ * z₁ - y₁ * z₂
-      let b := x₂ * z₁ - x₁ * z₂
-      let c := a^2 * z₁ * z₂ - b^3 - (2 : Nat) * b^2 * x₁ * z₂
-      let x₃ := b * c
-      let y₃ := a * (b^2 * x₁ * z₂ - c) - b^3 * y₁ * z₂
-      let z₃ := b^3 * z₁ * z₂
-      ⟨x₃, y₃, z₃⟩
--/
+def add (p₁ p₂ : ProjectivePoint C) : ProjectivePoint C :=
+  let a := C.a
+  let b := C.b
+  match p₁, p₂ with
+  | ⟨x₁, y₁, z₁⟩, ⟨x₂, y₂, z₂⟩ =>
+    let z₁z₂ := z₁ * z₂
+    let x₁z₂x₂z₁ := x₁ * z₂ + x₂ * z₁
+    let ax₁z₂x₂z₁ := a * x₁z₂x₂z₁
+    let b3 := (3 : Nat) * b
+    let t₁ := b3 * x₁z₂x₂z₁ - a^2 * z₁z₂
+    let x₃ :=
+      (x₁ * y₂ + x₂ * y₁) * 
+      (y₂ * y₁ - ax₁z₂x₂z₁ - b3 * z₁z₂) -
+      (y₁ * z₂ + y₂ * z₁) *
+      (a * x₁ * x₂ + t₁)
+    let y₃ := ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂) *
+      (a * x₁ * x₂ + t₁) +
+      (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) * (y₁ * y₂ - ax₁z₂x₂z₁ - b3 * z₁z₂)
+    let z₃ := (y₁ * z₂ + y₂ * z₁) * (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) +
+      (x₁ * y₂ + x₂ * y₁) * ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂)
+    ⟨x₃, y₃, z₃⟩
 
 end ProjectivePoint
 
@@ -151,7 +172,7 @@ open CurveGroup in
 partial def smulAux [Field F] (C : Curve F)
   [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
   if n == 0 then acc
-  else match n % 2 == 0 with
+  else match n % 2 == 1 with
     | true => smulAux C (n >>> 1) (double C p) (add C p acc)
     | false => smulAux C (n >>> 1) (double C p) acc
 
@@ -159,11 +180,11 @@ open CurveGroup in
 /--
 Montgomery's ladder for fast scalar-point multiplication
 -/
-def smul [Field F] {C : Curve F}
+def smul [Field F] (C : Curve F)
   [CurveGroup C K] (n : Nat) (p : K) : K := smulAux C n p (zero C)
 
-instance {F K : Type _} [f : Field F] (C : Curve F) [gr : CurveGroup C K] : HMul Nat K K where
-  hMul := @smul F K f C gr
+instance {F K : Type _} [Field F] (C : Curve F) [CurveGroup C K] : HMul Nat K K where
+  hMul := smul C 
   
 open ProjectivePoint in
 instance {F : Type _} [Field F] {C : Curve F} : CurveGroup C (ProjectivePoint C) where 

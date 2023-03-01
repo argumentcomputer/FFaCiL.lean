@@ -18,24 +18,30 @@ namespace SmallCurve
 def G : ProjectivePoint SmallCurve := ⟨52, 74, 1⟩ -- TODO: Validate these
 
 def P : ProjectivePoint SmallCurve := ⟨98, 24, 1⟩ -- Validate these
+
 #eval G + G == ⟨79, 44, 1⟩
 
-#eval 0 * G -- This is right
+#eval 0 * G == .infinity
 
-#eval 1 * G -- not G
+#eval 1 * G == G
+
+#eval G + G == .double G
+
+#eval P + P == .double P
 
 #eval 2 * G == ⟨79, 44, 1⟩
 
 #eval 7 * P == ⟨50, 41, 1⟩
 
-#eval 96 * P == P -- Should be P
+#eval 96 * P == .infinity 
 
 #eval P + G == ⟨57, 50, 1⟩
 
-#eval (19 : SmallField) * G
-
 #eval (19 : SmallField) * G == G
 
+#eval (default : ProjectivePoint SmallCurve)
+
+#eval (default : Zmod 5)
 -- TODO: re-use the above for the affine tests
 
 end SmallCurve
