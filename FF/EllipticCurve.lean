@@ -1,5 +1,8 @@
 import FF.NewField
 
+-- TODO: Add this notation to `Ring.lean` in YatimaStdLib
+
+postfix:max "⁻¹" => Field.inv
 /-!
 TODO: Major items to consider before we can finally settle on this design:
 * Does the design allow for specific optimizations for specific curves?
@@ -46,8 +49,8 @@ def scale (f : F) : ProjectivePoint C → ProjectivePoint C
 
 def norm : ProjectivePoint C → ProjectivePoint C
   | P@⟨_, y, z⟩ =>
-    if z != 0 then P.scale $ Field.inv z else
-    if y != 0 then P.scale $ Field.inv y else
+    if z != 0 then P.scale z⁻¹ else
+    if y != 0 then P.scale y⁻¹ else
     ⟨1, 0, 0⟩
 
 instance  : BEq $ ProjectivePoint C where
