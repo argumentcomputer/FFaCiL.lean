@@ -152,8 +152,8 @@ partial def smulAux [Field F] (C : Curve F)
   [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
   if n == 0 then acc
   else match n % 2 == 0 with
-    | true => smulAux C (n >>> 1) (add C p p) (add C p acc)
-    | false => smulAux C (n >>> 1) (add C p p) acc
+    | true => smulAux C (n >>> 1) (double C p) (add C p acc)
+    | false => smulAux C (n >>> 1) (double C p) acc
 
 open CurveGroup in
 /--
