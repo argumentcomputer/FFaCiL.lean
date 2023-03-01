@@ -18,19 +18,19 @@ namespace SmallCurve
 def G : ProjectivePoint SmallCurve := ⟨52, 74, 1⟩ -- TODO: Validate these
 
 def P : ProjectivePoint SmallCurve := ⟨98, 24, 1⟩ -- Validate these
-#eval G + G -- (79 : 44 : 1)
+#eval G + G == ⟨79, 44, 1⟩
 
 #eval 0 * G -- This is right
 
 #eval 1 * G -- not G
 
-#eval 2 * G -- (79: 44 : 1)
+#eval 2 * G == ⟨79, 44, 1⟩
 
 #eval 7 * P -- (50 : 41 : 1)
 
 #eval 96 * P -- Should be P
 
-#eval P + G -- (57 : 50 : 1)
+#eval P + G == ⟨57, 50, 1⟩
 
 #eval (19 : SmallField) * G
 

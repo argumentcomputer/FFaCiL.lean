@@ -82,9 +82,28 @@ def double : ProjectivePoint C → ProjectivePoint C
 
 def add (p₁ p₂ : ProjectivePoint C) 
   : ProjectivePoint C :=
-    if p₁ == p₂ then ProjectivePoint.double p₁ else
+    let a := C.a
+    let b := C.b
     match p₁, p₂ with
-    | ⟨x₁, y₁, z₁⟩, ⟨x₂, y₂, z₂⟩ => 
+    | ⟨x₁, y₁, z₁⟩, ⟨x₂, y₂, z₂⟩ =>
+      let z₁z₂ := z₁ * z₂
+      let x₁z₂x₂z₁ := x₁ * z₂ + x₂ * z₁
+      let ax₁z₂x₂z₁ := a * x₁z₂x₂z₁
+      let b3 := (3 : Nat) * b
+      let t₁ := b3 * x₁z₂x₂z₁ - a^2 * z₁z₂
+      let x₃ :=
+        (x₁ * y₂ + x₂ * y₁) * 
+        (y₂ * y₁ - ax₁z₂x₂z₁ - b3 * z₁z₂) -
+        (y₁ * z₂ + y₂ * z₁) *
+        (a * x₁ * x₂ + t₁)
+      let y₃ := ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂) *
+        (a * x₁ * x₂ + t₁) +
+        (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) * (y₁ * y₂ - ax₁z₂x₂z₁ - b3 * z₁z₂)
+      let z₃ := (y₁ * z₂ + y₂ * z₁) * (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) +
+        (x₁ * y₂ + x₂ * y₁) * ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂)
+      ⟨x₃, y₃, z₃⟩
+
+/-
       let a := y₂ * z₁ - y₁ * z₂
       let b := x₂ * z₁ - x₁ * z₂
       let c := a^2 * z₁ * z₂ - b^3 - (2 : Nat) * b^2 * x₁ * z₂
@@ -92,6 +111,7 @@ def add (p₁ p₂ : ProjectivePoint C)
       let y₃ := a * (b^2 * x₁ * z₂ - c) - b^3 * y₁ * z₂
       let z₃ := b^3 * z₁ * z₂
       ⟨x₃, y₃, z₃⟩
+-/
 
 end ProjectivePoint
 
