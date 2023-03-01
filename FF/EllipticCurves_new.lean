@@ -1,5 +1,12 @@
 import FF.NewField
 
+/-!
+TODO: Major items to consider before we can finally settle on this design:
+* Does the design allow for specific optimizations for specific curves?
+  (for example, GLV optimization for scalar mul?)
+* 
+
+-/
 /--
 Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b`
 for a prime field `F` such that `char K > 3`
@@ -7,6 +14,22 @@ for a prime field `F` such that `char K > 3`
 structure Curve (F : Type _) [PrimeField F] where
   a : F
   b : F
+
+/-
+TODO: Add more methods relative to curves. This includes things like
+* Order
+* Cofactor
+* different forms (Weierstrass, Jacobian)
+* some repr for Curve
+-/
+
+/-
+TODO: Add more curve point operations
+* Hash to curve
+* random curve point
+* onCurve and projectiveOnCurve
+* Frobenius? (Only makes sense if we define curves over `Galois Fields`)
+-/
 
 structure ProjectivePoint {F : Type _} [PrimeField F] (C : Curve F) where
   X : F
@@ -45,15 +68,6 @@ def ProjectivePoint.add {F : Type _} [PrimeField F] {C : Curve F} (p₁ p₂ : P
     let y₃ := a * (b^2 * x₁ * z₂ - c) - b^3 * y₁ * z₂
     let z₃ := b^3 * z₁ * z₂
     ⟨x₃, y₃, z₃⟩
-
-partial def ProjectivePoint.scaleAux {F : Type _} [PrimeField F] {C : Curve F} (n : Nat) 
-  (P acc : ProjectivePoint C) : ProjectivePoint C :=
-  if n == 0 then acc else
-    if n % 2 == 0 then
-      scaleAux (n >>> 1) (add P P) (add P acc)
-    else
-      scaleAux (n >>> 1) (add P P) acc
-  
 
 inductive AffinePoint {F : Type _} [PrimeField F] (C : Curve F) where
   | affine (X : F) (Y : F) : AffinePoint C
@@ -141,23 +155,3 @@ instance {F : Type _} [PrimeField F] {C : Curve F} : CurveGroup C (AffinePoint C
       | .infinity => .infinity
       | .affine x y => .affine (x^(PrimeField.char F)) (y^(PrimeField.char F))
 
-new_field Fp with
-  prime: 101
-  generator: 2
-
-instance : ToString Fp where
-  toString n := toString ∘ NewField.natRepr $ n
-
-def NewCurve : Curve Fp where
-  a := 2
-  b := 3  
-
-def G₁ : ProjectivePoint NewCurve := ⟨52, 34, 1⟩
-def G₂ : ProjectivePoint NewCurve := ⟨21, 9, 1⟩
-
-#eval G₁ + G₂
-def mulBy2 := ProjectivePoint.scaleAux 2 G₁ .infinity
-#eval mulBy2
-
-#eval 2 * G₂
-#eval CurveGroup.double NewCurve G₂
