@@ -36,18 +36,34 @@ structure ProjectivePoint {F : Type _} [Field F] (C : Curve F) where
   X : F
   Y : F
   Z : F
-  deriving BEq
 
-instance [ToString F] [Field F] {C : Curve F} : ToString $ ProjectivePoint C where
+namespace ProjectivePoint 
+
+variable {F : Type _} [Field F] {C : Curve F}
+
+def scale (f : F) : ProjectivePoint C → ProjectivePoint C
+  | ⟨x, y, z⟩ => ⟨f * x, f * y, f * z⟩
+
+def norm : ProjectivePoint C → ProjectivePoint C
+  | P@⟨_, y, z⟩ =>
+    if z != 0 then P.scale $ Field.inv z else
+    if y != 0 then P.scale $ Field.inv y else
+    ⟨1, 0, 0⟩
+
+instance  : BEq $ ProjectivePoint C where
+  beq P Q :=
+    let ⟨x₁, y₁, z₁⟩ := P.norm
+    let ⟨x₂, y₂, z₂⟩ := Q.norm
+    x₁ == x₂ && y₁ == y₂ && z₁ == z₂
+
+instance [ToString F] : ToString $ ProjectivePoint C where
   toString := fun ⟨x, y, z⟩ => s!"({x} : {y} : {z})"
 
-def ProjectivePoint.isInfinity {F : Type _} [Field F] {C : Curve F} (P : ProjectivePoint C) :=
-  P.X == 0 && P.Y == 1 && P.Z == 0
+def isInfinity (P : ProjectivePoint C) := P.X == 0 && P.Y == 1 && P.Z == 0
 
-def ProjectivePoint.infinity {F : Type _} [Field F] {C : Curve F} : ProjectivePoint C :=
-  ⟨0, 1, 0⟩
+def infinity : ProjectivePoint C := ⟨0, 1, 0⟩
 
-def ProjectivePoint.double [Field F] {C : Curve F} : ProjectivePoint C → ProjectivePoint C
+def double : ProjectivePoint C → ProjectivePoint C
   | ⟨x, y, z⟩ =>
     let a := C.a * z^2 + (3 : Nat) * x^2
     let b := y * z
@@ -58,7 +74,7 @@ def ProjectivePoint.double [Field F] {C : Curve F} : ProjectivePoint C → Proje
     let z₁ := (8 : Nat) * b^3
     ⟨x₁, y₁, z₁⟩
 
-def ProjectivePoint.add {F : Type _} [Field F] {C : Curve F} (p₁ p₂ : ProjectivePoint C) 
+def add (p₁ p₂ : ProjectivePoint C) 
   : ProjectivePoint C :=
     if p₁ == p₂ then ProjectivePoint.double p₁ else
     match p₁, p₂ with
@@ -70,6 +86,8 @@ def ProjectivePoint.add {F : Type _} [Field F] {C : Curve F} (p₁ p₂ : Projec
       let y₃ := a * (b^2 * x₁ * z₂ - c) - b^3 * y₁ * z₂
       let z₃ := b^3 * z₁ * z₂
       ⟨x₃, y₃, z₃⟩
+
+end ProjectivePoint
 
 inductive AffinePoint {F : Type _} [Field F] (C : Curve F) where
   | affine (X : F) (Y : F) : AffinePoint C
