@@ -26,9 +26,9 @@ def P : ProjectivePoint SmallCurve := ⟨98, 24, 1⟩ -- Validate these
 
 #eval 2 * G == ⟨79, 44, 1⟩
 
-#eval 7 * P -- (50 : 41 : 1)
+#eval 7 * P == ⟨50, 41, 1⟩
 
-#eval 96 * P -- Should be P
+#eval 96 * P == P -- Should be P
 
 #eval P + G == ⟨57, 50, 1⟩
 

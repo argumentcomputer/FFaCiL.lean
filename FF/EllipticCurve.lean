@@ -69,15 +69,18 @@ def isInfinity (P : ProjectivePoint C) := P.X == 0 && P.Y == 1 && P.Z == 0
 
 def infinity : ProjectivePoint C := ⟨0, 1, 0⟩
 
-def double : ProjectivePoint C → ProjectivePoint C
+def double (p : ProjectivePoint C) : ProjectivePoint C :=
+  let a := C.a
+  let b := C.b
+  match p with
   | ⟨x, y, z⟩ =>
-    let a := C.a * z^2 + (3 : Nat) * x^2
-    let b := y * z
-    let c := x * y * b
-    let d := a^2 - (8 : Nat) * c
-    let x₁ := (2 : Nat) * b * d
-    let y₁ := a * ((4 : Nat) * c - d) - b^3 * y * z
-    let z₁ := (8 : Nat) * b^3
+    let x₁ :=
+      (2 : Nat) * x * y * (y^2 - (2 : Nat) * a * x * z - (3 : Nat) * b * z^2) -
+      (2 : Nat) * y * z * (a * x^2 + (6 : Nat) * b * x * z - a^2 * z^2)
+    let y₁ := (y^2 + (2 : Nat) * x * z + (3 : Nat) * b * z^2) *
+      (y^2 - (2 : Nat) * x * z - (3 : Nat) * b * z^2) +
+      (a * x^2 + (6 : Nat) * b * x * z - a^2 * z^2) * ((3 : Nat) * x^2 + a * z^2)
+    let z₁ := (8 : Nat) * y^3 * z
     ⟨x₁, y₁, z₁⟩
 
 def add (p₁ p₂ : ProjectivePoint C) 
@@ -149,8 +152,8 @@ partial def smulAux [Field F] (C : Curve F)
   [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
   if n == 0 then acc
   else match n % 2 == 0 with
-    | true => smulAux C (n >>> 1) (double C p) (add C p acc)
-    | false => smulAux C (n >>> 1) (double C p) acc
+    | true => smulAux C (n >>> 1) (add C p p) (add C p acc)
+    | false => smulAux C (n >>> 1) (add C p p) acc
 
 open CurveGroup in
 /--
