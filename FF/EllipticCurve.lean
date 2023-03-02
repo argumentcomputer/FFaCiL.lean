@@ -183,8 +183,6 @@ class CurveGroup {F : Type _} [Field F] (C : Curve F) (K : outParam $ Type _) wh
   inv : K → K
   add : K → K → K
   double : K → K
-  -- toPoint : F → F → Option K -- TODO: I think we should add this to `ProjectivePoint` and
-                                -- `AffinePoint` separately
   -- frobenius : K → K -- TODO: I'm not sure we need/want Frobenius for `CurveGroup`
 
 instance [CurveGroup C K] : Add K where
@@ -215,15 +213,6 @@ instance : CurveGroup C (ProjectivePoint C) where
   inv := fun ⟨x, y, z⟩ => ⟨x, 0 - y, z⟩ 
   add := ProjectivePoint.add
   double := ProjectivePoint.double
-  -- toPoint x y :=
-  --   let p := ⟨x, y, 1⟩
-  --   let isDef := fun (⟨x, y, z⟩ : ProjectivePoint C) =>
-  --     (x * x + C.a * z * z) * x == (y * y - C.b * z * z) * z
-  --   if isDef p then some p else none
-  -- frobenius :=
-  --   fun ⟨x, y, z⟩ =>
-  --   let frob := fun (x : F) => x^(Field.char F)
-  --   ⟨ frob x, frob y, frob z⟩
 
 open AffinePoint in
 instance : CurveGroup C (AffinePoint C) where 
@@ -233,11 +222,4 @@ instance : CurveGroup C (AffinePoint C) where
     | x           => x
   add := add
   double := double
-  -- toPoint x y :=
-  --   let p := .affine x y
-  --   if (x * x + C.a * x) * x + C.b == y * y then some p else none
-  -- frobenius p :=
-  --   match p with
-  --     | .infinity => .infinity
-  --     | .affine x y => .affine (x^(Field.char F)) (y^(Field.char F))
 
