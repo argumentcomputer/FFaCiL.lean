@@ -1,6 +1,8 @@
 import FF.EllipticCurve
 import LSpec
 
+open LSpec
+
 -- TODO : Add this (or a better instance) to the `Zmod` file
 instance : ToString $ Zmod n where
   toString x := ToString.toString x.rep
@@ -15,33 +17,38 @@ def SmallCurve : Curve SmallField where
 
 namespace SmallCurve
 
-def G : ProjectivePoint SmallCurve := ⟨52, 74, 1⟩ -- TODO: Validate these
+def G : ProjectivePoint SmallCurve := .mkD 52 74 1 
 
-def P : ProjectivePoint SmallCurve := ⟨98, 24, 1⟩ -- Validate these
+def P : ProjectivePoint SmallCurve := .mkD 98 24 1 
 
-#eval G + G == ⟨79, 44, 1⟩
+open ProjectivePoint 
 
-#eval 0 * G == .infinity
+def onCurveTests : TestSeq :=
+  test "onCurve" (ProjectivePoint.onCurve SmallCurve G.X G.Y G.Z) $
+  test "notOnCurve" (not $ ProjectivePoint.onCurve SmallCurve P.X (P.Y + 1) P.Z)
 
-#eval 1 * G == G
+def pAddTests : TestSeq :=
+  test "add 1" (G + G == ⟨79, 44, 1⟩) $
+  test "add 2" (P + G == ⟨57, 50, 1⟩) $
+  test "add 3" ((zero : ProjectivePoint SmallCurve) + zero == zero)
 
-#eval G + G == .double G
+def pDoubleTests : TestSeq :=
+  test "double 1" (G + G == .double G) $
+  test "double 2" (P + P == .double P) $
+  test "double 3" ((zero : ProjectivePoint SmallCurve) + zero == .double zero)
 
-#eval P + P == .double P
+def pSMultests : TestSeq :=
+  test "smul 0" (0 * G == zero) $
+  test "smul 1" (1 * P == P) $
+  test "smul 2" (2 * G == double G) $
+  test "smul 2'" (2 * P == P + P) $
+  test "smul 7" (7 * P == ⟨50, 41, 1⟩) $
+  test "smul 97" (97 * P == P)
 
-#eval 2 * G == ⟨79, 44, 1⟩
+def fieldSMulTests : TestSeq :=
+  test "scale 1" ((1 : SmallField) * P == P) $
+  test "scale 2" ((19 : SmallField) * G == G)
 
-#eval 7 * P == ⟨50, 41, 1⟩
-
-#eval 96 * P == .infinity 
-
-#eval P + G == ⟨57, 50, 1⟩
-
-#eval (19 : SmallField) * G == G
-
-#eval (default : ProjectivePoint SmallCurve)
-
-#eval (default : Zmod 5)
 -- TODO: re-use the above for the affine tests
 
 end SmallCurve
@@ -60,4 +67,6 @@ abbrev BigField := Zmod 0x4c4b2d1587029f7d01d6c6c399c235c544ef233215b42392c6e283
 
 end bigtest
 
-def main := IO.println "hi'"
+open SmallCurve
+
+def main := lspecIO $ onCurveTests ++ pAddTests ++ pDoubleTests ++ pSMultests ++ fieldSMulTests

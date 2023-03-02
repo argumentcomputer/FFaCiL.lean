@@ -168,6 +168,16 @@ def double [Field F] {C : Curve F} :
 
 end AffinePoint
 
+variable {F K : Type _} [Field F] (C : Curve F) 
+
+def ProjectivePoint.toAffine (P : ProjectivePoint C) : AffinePoint C :=
+  let P' := P.norm
+  if P.Z == 0 then .infinity else .affine P'.X P'.Y
+
+def AffinePoint.toProjective : AffinePoint C → ProjectivePoint C
+  | .infinity => .infinity
+  | .affine x y => ⟨x, y, 1⟩
+
 class CurveGroup {F : Type _} [Field F] (C : Curve F) (K : outParam $ Type _) where 
   zero : K
   inv : K → K
@@ -177,31 +187,30 @@ class CurveGroup {F : Type _} [Field F] (C : Curve F) (K : outParam $ Type _) wh
                                 -- `AffinePoint` separately
   -- frobenius : K → K -- TODO: I'm not sure we need/want Frobenius for `CurveGroup`
 
-instance {F K : Type _} [Field F] (C : Curve F) [CurveGroup C K] : Add K where
+instance [CurveGroup C K] : Add K where
   add := CurveGroup.add C
 
-instance {F K : Type _} [Field F] (C : Curve F) [CurveGroup C K] : Neg K where
+instance [CurveGroup C K] : Neg K where
   neg := CurveGroup.inv C
 
 open CurveGroup in
-partial def smulAux [Field F] (C : Curve F)
-  [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
+partial def smulAux [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
   if n == 0 then acc
   else match n % 2 == 1 with
-    | true => smulAux C (n >>> 1) (double C p) (add C p acc)
-    | false => smulAux C (n >>> 1) (double C p) acc
+    | true => smulAux (n >>> 1) (double C p) (add C p acc)
+    | false => smulAux (n >>> 1) (double C p) acc
 
 open CurveGroup in
 /--
 Montgomery's ladder for fast scalar-point multiplication
 -/
-def smul [Field F] (C : Curve F) [CurveGroup C K] (n : Nat) (p : K) : K := smulAux C n p (zero C)
+def smul [CurveGroup C K] (n : Nat) (p : K) : K := smulAux C n p (zero C)
 
-instance {F K : Type _} [Field F] (C : Curve F) [CurveGroup C K] : HMul Nat K K where
+instance [CurveGroup C K] : HMul Nat K K where
   hMul := smul C 
   
 open ProjectivePoint in
-instance {F : Type _} [Field F] {C : Curve F} : CurveGroup C (ProjectivePoint C) where 
+instance : CurveGroup C (ProjectivePoint C) where 
   zero := infinity
   inv := fun ⟨x, y, z⟩ => ⟨x, 0 - y, z⟩ 
   add := ProjectivePoint.add
@@ -217,12 +226,11 @@ instance {F : Type _} [Field F] {C : Curve F} : CurveGroup C (ProjectivePoint C)
   --   ⟨ frob x, frob y, frob z⟩
 
 open AffinePoint in
-instance {F : Type _} [Field F] {C : Curve F} : CurveGroup C (AffinePoint C) where 
-  zero := .infinity
-  inv p :=
-    match p with
-      | .affine X Y => .affine X (- Y)
-      | x           => x
+instance : CurveGroup C (AffinePoint C) where 
+  zero := infinity
+  inv p := match p with
+    | affine X Y => affine X (- Y)
+    | x           => x
   add := add
   double := double
   -- toPoint x y :=
