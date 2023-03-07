@@ -158,16 +158,18 @@ namespace AffinePoint
 
 def zero : AffinePoint C := .infinity
 
+open ProjectivePoint in
 def add {F : Type _} [Field F] {C : Curve F} 
   : AffinePoint C → AffinePoint C → AffinePoint C
     | .infinity, p => p
     | p, .infinity => p
     | .affine x₁ y₁, .affine x₂ y₂ =>
-      if x₁ == x₂ then .infinity else
-      let l := (y₁ - y₂) / (x₁ - x₂)
-      let x₃ := l^2 - x₁ - x₂
-      let y₃ := l * (x₁ - x₃) - y₁
-      .affine x₃ y₃
+      let p₁ : ProjectivePoint C := mkD x₁ y₁ 1 
+      let p₂ : ProjectivePoint C := mkD x₂ y₂ 1 
+      let p₁p₂ : ProjectivePoint C :=
+        norm $ @ProjectivePoint.add F _ C p₁ p₂
+      if p₁p₂.isInfinity then infinity else
+      .affine p₁p₂.X p₁p₂.Y
 
 def double [Field F] {C : Curve F} :
   AffinePoint C → AffinePoint C
