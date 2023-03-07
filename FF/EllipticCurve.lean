@@ -181,13 +181,6 @@ def double [Field F] {C : Curve F} :
     .affine x' y'
   | .infinity => .infinity
 
-def scale (a : F) : AffinePoint C → AffinePoint C
-  | .infinity => .infinity
-  | .affine x y => .affine (a * x) (a * y)
-
-instance : HMul F (AffinePoint C) (AffinePoint C) where
-  hMul := scale
-
 def onCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
 
 end AffinePoint
