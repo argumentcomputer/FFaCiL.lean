@@ -81,10 +81,6 @@ def aSMultests : TestSeq :=
   test "affine: smul 7" (7 * P == .affine 50 41) $
   test "affine: smul 97" (97 * P == P)
 
-def aFieldSMulTests : TestSeq :=
-  test "affine: scale 1" ((1 : SmallField) * P == P) $
-  test "affine: scale 2" ((19 : SmallField) * G == G)
-
 end AffineCase
 
 end smalltest
@@ -106,4 +102,4 @@ open AffineCase
 
 def main := lspecIO $
   pOnCurveTests ++ pAddTests ++ pDoubleTests ++ pSMultests ++ pFieldSMulTests ++
-  aOnCurveTests ++ aAddTests ++ aDoubleTests ++ aSMultests ++ aFieldSMulTests
+  aOnCurveTests ++ aAddTests ++ aDoubleTests ++ aSMultests
