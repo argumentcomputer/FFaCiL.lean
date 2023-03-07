@@ -40,7 +40,7 @@ structure ProjectivePoint {F : Type _} [Field F] (C : Curve F) where
   Y : F
   Z : F
 
-namespace ProjectivePoint 
+namespace ProjectivePoint
 
 variable {F : Type _} [Field F] {C : Curve F}
 
@@ -144,27 +144,49 @@ end ProjectivePoint
 inductive AffinePoint {F : Type _} [Field F] (C : Curve F) where
   | affine (X : F) (Y : F) : AffinePoint C
   | infinity : AffinePoint C
+  deriving BEq
+
+variable {F : Type _} [Field F] {C : Curve F}
+
+instance [ToString F] : ToString (AffinePoint C) where
+  toString p :=
+    match p with
+      | .infinity => "O"
+      | .affine x y => s!"({x} : {y})"
 
 namespace AffinePoint
 
+def zero : AffinePoint C := .infinity
+
 def add {F : Type _} [Field F] {C : Curve F} 
   : AffinePoint C → AffinePoint C → AffinePoint C
-    | .infinity, _ => .infinity
-    | _, .infinity => .infinity
+    | .infinity, p => p
+    | p, .infinity => p
     | .affine x₁ y₁, .affine x₂ y₂ =>
-        let lambda := (y₁ + y₂) / (x₁ + y₂)
-        let x₃ := lambda^2 + lambda + x₁ + x₂ + Curve.a C
-        let y₃ := lambda * (x₁ + x₃) + x₃ + x₁
-        .affine x₃ y₃
+      if x₁ == x₂ then .infinity else
+      let l := (y₁ - y₂) / (x₁ - x₂)
+      let x₃ := l^2 - x₁ - x₂
+      let y₃ := l * (x₁ - x₃) - y₁
+      .affine x₃ y₃
 
 def double [Field F] {C : Curve F} :
   AffinePoint C → AffinePoint C
   | .affine x y =>
-    let lambda := ((3 : Nat) * x^2 + Curve.a C) / (2 : Nat) * y
+    let xx := x^2
+    let lambda := (xx + xx + xx + Curve.a C) / (y + y)
     let x' := lambda^2 - (2 : Nat) * x
     let y' := lambda * (x - x') - y
     .affine x' y'
   | .infinity => .infinity
+
+def scale (a : F) : AffinePoint C → AffinePoint C
+  | .infinity => .infinity
+  | .affine x y => .affine (a * x) (a * y)
+
+instance : HMul F (AffinePoint C) (AffinePoint C) where
+  hMul := scale
+
+def onCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
 
 end AffinePoint
 
