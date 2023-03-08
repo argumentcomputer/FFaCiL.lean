@@ -104,5 +104,3 @@ open AffineCase
 def main := lspecIO $
   pOnCurveTests ++ pAddTests ++ pDoubleTests ++ pSMultests ++ pFieldSMulTests ++
   aOnCurveTests ++ aAddTests ++ aDoubleTests ++ aSMultests
-
-#eval main
