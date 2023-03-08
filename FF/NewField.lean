@@ -297,7 +297,7 @@ macro_rules
         else
           r := $p - r
 
-        for _ in [1: k - 11 + 1] do
+        for _ in [1: k - $content + 1] do
           if r % 2 == 0 then
             r := r >>> 1
           else

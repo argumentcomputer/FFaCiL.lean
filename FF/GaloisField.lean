@@ -122,11 +122,11 @@ instance [GaloisField K] : OfNat (Extension K P) (nat_lit 0) := ⟨#[0]⟩
 instance [GaloisField K] : OfNat (Extension K P) (nat_lit 1) := ⟨#[1]⟩
 
 instance [GaloisField K] : GaloisField (Extension K P) where
-  coe := sorry
   zero := 0
   one := 1
   add := polyAdd
   hPow := polyPow
+  coe n := #[n]
   sub := polySub
   div f g := polyMul (polyInv g P) f
   beq f g := f.norm.toArray == g.norm.toArray
