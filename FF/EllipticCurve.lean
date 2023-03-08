@@ -7,32 +7,36 @@ postfix:max "⁻¹" => Field.inv
 TODO: Major items to consider before we can finally settle on this design:
 * Does the design allow for specific optimizations for specific curves?
   (for example, GLV optimization for scalar mul?)
-* 
-
 -/
 
 /--
 Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b`
 for a prime field `F` such that `char K > 3`
+TODO: Add
+* different forms (Weierstrass, Jacobian)
 -/
 structure Curve (F : Type _) [Field F] where
   a : F
   b : F
 
-/-
-TODO: Add more methods relative to curves. This includes things like
-* Order
-* Cofactor
-* different forms (Weierstrass, Jacobian)
-* some repr for Curve
--/
+namespace Curve
+
+variable {F : Type _} [Field F] (C : Curve F)
+
+instance [ToString F] : ToString $ Curve F where
+  toString C := s!"y² = x³ + {C.a} x + {C.b}"
+
+def discriminant : F := (- (16 : Nat)) * ((4 : Nat) * C.a^3 + (27 : Nat) * C.b^2)
+
+def j : F := (1728 : Nat) * C.a^3 / ((4 : Nat) * C.discriminant)
+
+end Curve
+
 
 /-
 TODO: Add more curve point operations
 * Hash to curve
 * random curve point
-* onCurve and projectiveOnCurve
-* Frobenius? (Only makes sense if we define curves over `Galois Fields`)
 -/
 
 structure ProjectivePoint {F : Type _} [Field F] (C : Curve F) where
@@ -68,16 +72,15 @@ instance : HMul F (ProjectivePoint C) (ProjectivePoint C) where
   hMul := scale
 
 def norm : ProjectivePoint C → ProjectivePoint C
-  | P@⟨_, y, z⟩ =>
+  | P@⟨_, _, z⟩ =>
     if z != 0 then z⁻¹ * P else
-    if y != 0 then y⁻¹ * P else
-    ⟨1, 0, 0⟩
+    infinity
 
 instance  : BEq $ ProjectivePoint C where
   beq P Q :=
     let ⟨x₁, y₁, z₁⟩ := P.norm
     let ⟨x₂, y₂, z₂⟩ := Q.norm
-    x₁ == x₂ && y₁ == y₂ && z₁ == z₂
+    z₁ == z₂ && y₁ == y₂ && x₁ == x₂
 
 instance [ToString F] : ToString $ ProjectivePoint C where
   toString := fun ⟨x, y, z⟩ => s!"({x} : {y} : {z})"
@@ -156,30 +159,32 @@ instance [ToString F] : ToString (AffinePoint C) where
 
 namespace AffinePoint
 
-def zero : AffinePoint C := .infinity
+def zero : AffinePoint C := infinity
 
-open ProjectivePoint in
-def add {F : Type _} [Field F] {C : Curve F} 
-  : AffinePoint C → AffinePoint C → AffinePoint C
-    | .infinity, p => p
-    | p, .infinity => p
-    | .affine x₁ y₁, .affine x₂ y₂ =>
-      let p₁ : ProjectivePoint C := mkD x₁ y₁ 1 
-      let p₂ : ProjectivePoint C := mkD x₂ y₂ 1 
-      let p₁p₂ : ProjectivePoint C :=
-        norm $ @ProjectivePoint.add F _ C p₁ p₂
-      if p₁p₂.isInfinity then infinity else
-      .affine p₁p₂.X p₁p₂.Y
+def neg : AffinePoint C → AffinePoint C 
+  | infinity => infinity
+  | affine x y => affine x (-y)
 
 def double [Field F] {C : Curve F} :
   AffinePoint C → AffinePoint C
-  | .affine x y =>
+  | affine x y =>
     let xx := x^2
     let lambda := (xx + xx + xx + Curve.a C) / (y + y)
     let x' := lambda^2 - (2 : Nat) * x
     let y' := lambda * (x - x') - y
-    .affine x' y'
-  | .infinity => .infinity
+    affine x' y'
+  | infinity => infinity
+
+def add {F : Type _} [Field F] {C : Curve F} 
+  : AffinePoint C → AffinePoint C → AffinePoint C
+    | .infinity, p => p
+    | p, .infinity => p
+    | P@(.affine x₁ y₁), Q@(.affine x₂ y₂) =>
+      if P == Q then double P else
+      if P == neg Q then .infinity else
+      let lambda := (y₁ - y₂)/(x₁ - x₂)
+      let x₃ := (lambda^2 - x₁ - x₂)
+      .affine x₃ (lambda*(x₁ - x₃) - y₁)
 
 def onCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
 
@@ -192,15 +197,19 @@ def ProjectivePoint.toAffine (P : ProjectivePoint C) : AffinePoint C :=
   if P.Z == 0 then .infinity else .affine P'.X P'.Y
 
 def AffinePoint.toProjective : AffinePoint C → ProjectivePoint C
-  | .infinity => .infinity
-  | .affine x y => ⟨x, y, 1⟩
+  | infinity => .infinity
+  | affine x y => ⟨x, y, 1⟩
 
 class CurveGroup {F : Type _} [Field F] (C : Curve F) (K : outParam $ Type _) where 
   zero : K
   inv : K → K
   add : K → K → K
   double : K → K
-  -- frobenius : K → K -- TODO: I'm not sure we need/want Frobenius for `CurveGroup`
+/-
+TODO: Add more methods to `CurveGroup`. This includes things like
+* Order
+* Cofactor
+-/
 
 instance [CurveGroup C K] : Add K where
   add := CurveGroup.add C
@@ -217,13 +226,18 @@ partial def smulAux [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
 
 open CurveGroup in
 /--
-Montgomery's ladder for fast scalar-point multiplication
+Double and add algorithm for fast scalar-point multiplication
 -/
 def smul [CurveGroup C K] (n : Nat) (p : K) : K := smulAux C n p (zero C)
 
 instance [CurveGroup C K] : HMul Nat K K where
   hMul := smul C 
   
+instance [CurveGroup C K] : HMul Int K K where
+  hMul n p := match n with
+    | .ofNat n => n * p
+    | .negSucc n => (n + 1) * (- p)
+
 open ProjectivePoint in
 instance : CurveGroup C (ProjectivePoint C) where 
   zero := infinity
@@ -234,9 +248,7 @@ instance : CurveGroup C (ProjectivePoint C) where
 open AffinePoint in
 instance : CurveGroup C (AffinePoint C) where 
   zero := infinity
-  inv p := match p with
-    | affine X Y => affine X (- Y)
-    | x           => x
+  inv := neg
   add := add
   double := double
 

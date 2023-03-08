@@ -85,17 +85,18 @@ end AffineCase
 
 end smalltest
 
-section notsobigtest
+-- TODO: Add these kinds of "tests" to the Benchmarking suite
+-- section notsobigtest
 
-abbrev MediumField := Zmod 0x6fe7b597
+-- abbrev MediumField := Zmod 0x6fe7b597
 
-end notsobigtest
+-- end notsobigtest
 
-section bigtest
+-- section bigtest
 
-abbrev BigField := Zmod 0x4c4b2d1587029f7d01d6c6c399c235c544ef233215b42392c6e2838fb6cefd51
+-- abbrev BigField := Zmod 0x4c4b2d1587029f7d01d6c6c399c235c544ef233215b42392c6e2838fb6cefd51
 
-end bigtest
+-- end bigtest
 
 open SmallCurve
 open AffineCase
@@ -103,3 +104,5 @@ open AffineCase
 def main := lspecIO $
   pOnCurveTests ++ pAddTests ++ pDoubleTests ++ pSMultests ++ pFieldSMulTests ++
   aOnCurveTests ++ aAddTests ++ aDoubleTests ++ aSMultests
+
+#eval main
