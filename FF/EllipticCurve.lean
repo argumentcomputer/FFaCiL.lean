@@ -1,8 +1,5 @@
 import FF.NewField
 
--- TODO: Add this notation to `Ring.lean` in YatimaStdLib
-
-postfix:max "⁻¹" => Field.inv
 /-!
 TODO: Major items to consider before we can finally settle on this design:
 * Does the design allow for specific optimizations for specific curves?
