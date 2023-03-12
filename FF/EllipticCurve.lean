@@ -187,7 +187,7 @@ def onCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
 
 end AffinePoint
 
-variable {F K : Type _} [Field F] (C : Curve F) 
+-- variable {F K : Type _} [Field F] (C : Curve F) 
 
 def ProjectivePoint.toAffine (P : ProjectivePoint C) : AffinePoint C :=
   let P' := P.norm
@@ -197,7 +197,7 @@ def AffinePoint.toProjective : AffinePoint C → ProjectivePoint C
   | infinity => .infinity
   | affine x y => ⟨x, y, 1⟩
 
-class CurveGroup {F : Type _} [Field F] (C : Curve F) (K : outParam $ Type _) where 
+class CurveGroup {F : outParam $ Type _} [Field F] (K : Type _) (C : outParam $ Curve F)  where 
   zero : K
   inv : K → K
   add : K → K → K
@@ -208,44 +208,43 @@ TODO: Add more methods to `CurveGroup`. This includes things like
 * Cofactor
 -/
 
-instance [CurveGroup C K] : Add K where
-  add := CurveGroup.add C
+instance [CurveGroup K C] : Add K where
+  add := CurveGroup.add 
 
-instance [CurveGroup C K] : Neg K where
-  neg := CurveGroup.inv C
+instance [CurveGroup K C] : Neg K where
+  neg := CurveGroup.inv 
 
 open CurveGroup in
-partial def smulAux [CurveGroup C K] (n : Nat) (p : K) (acc : K) : K :=
+partial def smulAux [CurveGroup K C] (n : Nat) (p : K) (acc : K) : K :=
   if n == 0 then acc
   else match n % 2 == 1 with
-    | true => smulAux (n >>> 1) (double C p) (add C p acc)
-    | false => smulAux (n >>> 1) (double C p) acc
+    | true => smulAux (n >>> 1) (double p) (add p acc)
+    | false => smulAux (n >>> 1) (double p) acc
 
 open CurveGroup in
 /--
 Double and add algorithm for fast scalar-point multiplication
 -/
-def smul [CurveGroup C K] (n : Nat) (p : K) : K := smulAux C n p (zero C)
+def smul [CurveGroup K C] (n : Nat) (p : K) : K := smulAux n p (zero)
 
-instance [CurveGroup C K] : HMul Nat K K where
-  hMul := smul C 
+instance [CurveGroup K C] : HMul Nat K K where
+  hMul := smul  
   
-instance [CurveGroup C K] : HMul Int K K where
+instance [CurveGroup K C] : HMul Int K K where
   hMul n p := match n with
     | .ofNat n => n * p
     | .negSucc n => (n + 1) * (- p)
 
 open ProjectivePoint in
-instance : CurveGroup C (ProjectivePoint C) where 
+instance : CurveGroup (ProjectivePoint C) C where 
   zero := infinity
   inv := fun ⟨x, y, z⟩ => ⟨x, 0 - y, z⟩ 
   add := ProjectivePoint.add
   double := ProjectivePoint.double
 
 open AffinePoint in
-instance : CurveGroup C (AffinePoint C) where 
+instance : CurveGroup (AffinePoint C) C where 
   zero := infinity
   inv := neg
   add := add
   double := double
-
