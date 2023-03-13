@@ -281,6 +281,11 @@ def findZ : F := sorry
 
 open Field in
 open PrimeField in
+/--
+Shallue-van de Woestijne method.
+
+Based on https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-10.html#straightline-svdw
+-/
 def swm (u : F) : AffinePoint C := Id.run do
   let g := fun x => x^3 + C.a * x + C.b
   let z : F := findZ
