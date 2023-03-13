@@ -414,6 +414,11 @@ macro_rules
           t := (t * c) 
           m := iMax
         return some (r, $neg r)
+      
+      def isSquare (x : $name) : Bool :=
+        match sqrt? x with
+          | none => false
+          | some _ => true
 
       -- Instances: 
       instance : ToString $name where
