@@ -1,4 +1,4 @@
-import FF.PrimeField
+import FFaCiL.PrimeField
 
 class FieldSerialise (F : Type _) extends PrimeField F where
   serialise : K → ByteArray
