@@ -1,4 +1,11 @@
+<<<<<<< HEAD:FFaCiL/EllipticCurve.lean
 import FFaCiL.NewField
+||||||| parent of 3c898a7 (introduce the serialise class):FF/EllipticCurve.lean
+import FF.PrimeField
+import FF.FieldSerialise
+=======
+import FF.PrimeField
+>>>>>>> 3c898a7 (introduce the serialise class):FF/EllipticCurve.lean
 
 /-!
 TODO: Major items to consider before we can finally settle on this design:
@@ -248,99 +255,3 @@ instance : CurveGroup (AffinePoint C) C where
   inv := neg
   add := add
   double := double
-
-/--
-Curve point serialisation
--/
-class PointSerialise {F : Type _} [Field F] (C : Curve F) (K : Type _) [CurveGroup K C] where
-  serialise : K → ByteArray
-  deserialise : ByteArray → Option K
-
-namespace Serialise
-variable {F : Type _} [PrimeField F] (C : Curve F) [FieldSerialise F]
-
-/--
-Find a Z for Shallue-van de Woestijne method
--/
-def findZ : F := sorry
-/-
-  Id.run do
-  let g := fun x => x^3 + C.a * x + C.b
-  let h := fun z => - ((3 : Nat) * z^2 + (4 : Nat) * C.a) / ((4 : Nat) * g z)
-  let mut ctr : F := 1
-    while true do
-      for Z_cand in [ctr:-ctr] do
-        if g Z_cand == 0 then continue
-        else
-        if h Z_cand == 0 then continue
-        else not (h Z_cand).isSquare then continue
-        else if (g Z_cand).isSquare || g(-Z_cand / (2 : Nat)).isSquare then
-        return Z_cand
-      ctr := ctr + 1
--/
-
-open Field in
-open PrimeField in
-/--
-Shallue-van de Woestijne method.
-
-Based on https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-10.html#straightline-svdw
--/
-def swm (u : F) : AffinePoint C := Id.run do
-  let g := fun x => x^3 + C.a * x + C.b
-  let z : F := findZ
-  let c₁ := g findZ
-  let c₂ := -z / (2 : Nat)
-  let c₃ := Option.getD (sqrt (- g findZ * ((3 : Nat) * z^2 + (4 : Nat) * C.a))) 0
-  let c₄ := - (4 : Nat) * g z / ((3 : Nat) * z^2 + (4 : Nat) * C.a)
-  let mut tv₁ := u^2
-  tv₁ := tv₁ * c₁
-  let mut tv₂ := 1 + tv₁
-  tv₁ := 1 - tv₁
-  let mut tv₃ := tv₁ * tv₂
-  tv₃ := inv tv₃
-  let mut tv₄ := u * tv₁
-  tv₄ := tv₄ * tv₃
-  tv₄ := tv₄ * c₃
-  let x₁ := c₂ - tv₄
-  let mut gx₁ := x₁^2
-  gx₁ := gx₁ + C.a
-  gx₁ := gx₁ * x₁
-  gx₁ := gx₁ + C.b
-  let e₁ := match sqrt gx₁ with
-    | some _ => true
-    | _    => false
-  let x₂ := c₂ + tv₄
-  let mut gx₂ := x₂^2
-  gx₂ := gx₂ + C.a
-  gx₂ := gx₂ * x₂
-  gx₂ := gx₂ + C.b
-  let e₂ :=
-    let e' := match sqrt gx₂ with
-      | some _ => true
-      | _      => false
-    e' && not e₁
-  let mut x₃ := tv₂^2
-  x₃ := x₃ * tv₃
-  x₃ := x₃^2
-  x₃ := x₃ * c₄
-  x₃ := x₃ + z
-  let mut x :=
-    if e₁ then x₁ else x₃
-  x := if e₂ then x₂ else x
-  let mut gx := x^2
-  gx := gx + C.a
-  gx := gx * x
-  gx := gx + C.b
-  let mut y := Option.getD (sqrt gx) 0
-  let e₃ := Nat.mod (natRepr u) 2 == Nat.mod (natRepr y) 2
-  y := if e₃ then y else -y
-  return .affine x y
-
-instance : PointSerialise C (AffinePoint C) where
-  serialise := sorry
-  deserialise := sorry
-
-instance : PointSerialise C (ProjectivePoint C) where
-  serialise := sorry
-  deserialise := sorry
