@@ -46,6 +46,7 @@ section newfieldclass
 
 class PrimeField (K : Type _) extends Field K where
   char : Nat
+  sqrt : K → Option K 
   content : Nat
   twoAdicity : Nat × Nat
   legAC : Array ChainStep
@@ -54,7 +55,7 @@ class PrimeField (K : Type _) extends Field K where
   unwrap : K → K 
   natRepr : K → Nat
   batchedExp : K → Array Nat → Array K
-  batchedInv : Array K → Array K    
+  batchedInv : Array K → Array K
 
 end newfieldclass
 
