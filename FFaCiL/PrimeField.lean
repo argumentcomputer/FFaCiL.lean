@@ -431,7 +431,6 @@ macro_rules
 
       instance : Field $name where
         inv := $inv
-        sqrt := fun x => Prod.fst <$> $sqrt? x
 
       instance : NewField $name := {
         char := $p,
