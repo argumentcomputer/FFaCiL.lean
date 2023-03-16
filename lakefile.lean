@@ -1,10 +1,10 @@
 import Lake
 open Lake DSL
 
-package FF
+package FFaCiL
 
 @[default_target]
-lean_lib FF
+lean_lib FFaCiL
 
 require YatimaStdLib from git
   "https://github.com/yatima-inc/YatimaStdLib.lean" @ "f616da79a3ffe29d1a04b956ed36ebfdc6e82a7f"

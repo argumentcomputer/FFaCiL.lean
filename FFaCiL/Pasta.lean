@@ -1,5 +1,5 @@
-import FF.NewField
-import FF.EllipticCurve
+import FFaCiL.NewField
+import FFaCiL.EllipticCurve
 
 namespace Pasta
 

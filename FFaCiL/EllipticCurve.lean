@@ -1,4 +1,4 @@
-import FF.NewField
+import FFaCiL.NewField
 
 /-!
 TODO: Major items to consider before we can finally settle on this design:
