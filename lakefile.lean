@@ -6,6 +6,9 @@ package FFaCiL
 @[default_target]
 lean_lib FFaCiL
 
+require LightData from git
+  "https://github.com/yatima-inc/LightData" @ "7492abeae41f3a469396c73e13f48cd2b8da4a02" 
+
 require YatimaStdLib from git
   "https://github.com/yatima-inc/YatimaStdLib.lean" @ "78b02f02367cdf3bfa1b65c0efbd40e56a47588b"
 
