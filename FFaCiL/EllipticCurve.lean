@@ -1,11 +1,4 @@
-<<<<<<< HEAD:FFaCiL/EllipticCurve.lean
-import FFaCiL.NewField
-||||||| parent of 3c898a7 (introduce the serialise class):FF/EllipticCurve.lean
-import FF.PrimeField
-import FF.FieldSerialise
-=======
-import FF.PrimeField
->>>>>>> 3c898a7 (introduce the serialise class):FF/EllipticCurve.lean
+import FFaCiL.PrimeField
 
 /-!
 TODO: Major items to consider before we can finally settle on this design:
