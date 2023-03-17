@@ -2,7 +2,7 @@ import FF.EllipticCurve
 import FF.NewField
 import FF.Util
 
-private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ : Nat) : ProjectivePoint C :=
+private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ : Int) : ProjectivePoint C :=
   let task₁ := Task.spawn fun _ => k₁ * P
   let task₂ := Task.spawn fun _ => k₂ * Q
   task₁.get + task₂.get
@@ -39,31 +39,32 @@ def Λ : Int := 0x397e65a7d7c1ad71aee24b27e308f0a61259527ec1d4752e619d1840af55f1
 Together with `v₂`, two linearly independent vectors that span the kernel of
 `(k₁, k₂) ↦ k₁ + Λ k₂ (mod Vesta.q)`
 -/
-def v₁ : Int × Int := (0x93cd3a2c8198e2690c7c095a00000001, 0x49e69d1640a899538cb1279300000000)
+def v₁ : Vector Int := #[0x93cd3a2c8198e2690c7c095a00000001, 0x49e69d1640a899538cb1279300000000]
 
 /-- 
 Together with `v₁`, two linearly independent vectors that span the kernel of
 `(k₁, k₂) ↦ k₁ + Λ k₂ (mod Vesta.q)`
 -/
-def v₂ : Int × Int := (0x49e69d1640a899538cb1279300000000, -0x49e69d1640f049157fcae1c700000001)
+def v₂ : Vector Int := #[0x49e69d1640a899538cb1279300000000, -0x49e69d1640f049157fcae1c700000001]
 
-def m : Matrix Rat := #[#[v₁.fst, v₁.snd], #[v₂.fst, v₂.snd]]
+def m : Matrix Rat := #[v₁, v₂]
 
 def getPair (k : Int) : Int × Int := 
   let vec := m.twoInv.action #[k, 0] 
-  (k - vec[0]!.round, -vec[1]!.round)
+  let vec' : Vector Int := vec[0]!.round * v₁ + vec[1]!.round * v₂
+  (k - vec'[0]!, -vec'[1]!)
 
 def checkGetPair (k : Int) : Bool :=
   let (k₁, k₂) := getPair k
+  dbg_trace Vesta.q
+  dbg_trace (k₁, k₂)
   (k₁ + Λ * k₂) % Vesta.q == k % Vesta.q
 
-#eval checkGetPair 0x28939234304982305883284898129381283812893
-#eval Vesta.q
-
 instance(priority := high) : HMul Nat Point Point where
-  hMul foo bar := 
-    dbg_trace "noooo"
-    ⟨0, 0, 0⟩
+  hMul n P := 
+    let (k₁, k₂) := getPair n
+    twoMSM P (Φ P) k₁ k₂
+
 end Pallas
 
 namespace Vesta
