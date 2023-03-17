@@ -2,41 +2,78 @@ import FF.EllipticCurve
 import FF.NewField
 import FF.Util
 
+private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ : Nat) : ProjectivePoint C :=
+  let task₁ := Task.spawn fun _ => k₁ * P
+  let task₂ := Task.spawn fun _ => k₂ * Q
+  task₁.get + task₂.get
+
+def Pallas.p : Nat := 0x40000000000000000000000000000000224698fc094cf91b992d30ed00000001 
+
+def Vesta.q : Nat := 0x40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001 
+
 namespace Pallas
 
-abbrev F := Zmod 0x40000000000000000000000000000000224698fc094cf91b992d30ed00000001
+abbrev F := Zmod p 
 
 def Curve : Curve F := {a := 0, b := 5}
 
 abbrev Point := ProjectivePoint Curve
 
-end Pallas
+-- TODO : Delete this, this is some random test thing (or is it??)
+def G : Point := ProjectivePoint.mkD 
+0x3fe2f0feb60f920d4e7f06867da64339010388ac84b3395bfefc948e31fb1d4c 
+0x338fdec7c16c1871b4973f0be5b0c0ffbbe32e969ebf106c73601af301d235ee
+1
 
-namespace Vesta
+/-- A choice of primitive cube root of unity in `Pallas.F` -/
+def ζ : F := 0x2d33357cb532458ed3552a23a8554e5005270d29d19fc7d27b7fd22f0201b547
 
-abbrev F := Zmod 0x40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001
+/-- An efficiently computable endomorphism of Pallas used for the GLV optimization -/
+def Φ : Point → Point
+  | ⟨x, y, z⟩ => ⟨ζ * x, y, z⟩
 
-def Curve : Curve F := {a := 0, b:= 5}
+/-- The scalar corresponding to the endomorphism `Φ` -/
+def Λ : Int := 0x397e65a7d7c1ad71aee24b27e308f0a61259527ec1d4752e619d1840af55f1b1
 
-abbrev Point := ProjectivePoint Curve
+/-- 
+Together with `v₂`, two linearly independent vectors that span the kernel of
+`(k₁, k₂) ↦ k₁ + Λ k₂ (mod Vesta.q)`
+-/
+def v₁ : Int × Int := (0x93cd3a2c8198e2690c7c095a00000001, 0x49e69d1640a899538cb1279300000000)
+
+/-- 
+Together with `v₁`, two linearly independent vectors that span the kernel of
+`(k₁, k₂) ↦ k₁ + Λ k₂ (mod Vesta.q)`
+-/
+def v₂ : Int × Int := (0x49e69d1640a899538cb1279300000000, -0x49e69d1640f049157fcae1c700000001)
+
+def m : Matrix Rat := #[#[v₁.fst, v₁.snd], #[v₂.fst, v₂.snd]]
+
+def getPair (k : Int) : Int × Int := 
+  let vec := m.twoInv.action #[k, 0] 
+  (k - vec[0]!.round, -vec[1]!.round)
+
+def checkGetPair (k : Int) : Bool :=
+  let (k₁, k₂) := getPair k
+  (k₁ + Λ * k₂) % Vesta.q == k % Vesta.q
+
+#eval checkGetPair 0x28939234304982305883284898129381283812893
+#eval Vesta.q
 
 instance(priority := high) : HMul Nat Point Point where
   hMul foo bar := 
     dbg_trace "noooo"
     ⟨0, 0, 0⟩
+end Pallas
+
+namespace Vesta
+
+abbrev F := Zmod q
+
+def Curve : Curve F := {a := 0, b:= 5}
+
+abbrev Point := ProjectivePoint Curve
 
 end Vesta
 
-def G : Pallas.Point := ProjectivePoint.mkD 
-28896680183508622939825607448046027482759649890292397923555082389158610279756 
-23322151981098009229640914949988019390245012628977873075130252157080438978030
-1
 
-def ζ : Pallas.F :=  
-20444556541222657078399132219657928148671392403212669005631716460534733845831
-
-def G' : Pallas.Point := 
-  let ⟨x, y, z⟩ := G
-  ProjectivePoint.mkD (ζ * x) y z
-
-#eval G' == 26005156700822196841419187675678338661165322343552424574062261873906994770353 * G

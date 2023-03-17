@@ -12,7 +12,6 @@ def powAux (base : Rat) (exp : Nat) : Rat :=
     | 0 => acc
     | _ + 1 =>
       let n' := n / 2
-      dbg_trace s!"calculating {base} {power} {acc} {n}"
       have : n' < n := Nat.bitwise_rec_lemma (h ▸ Nat.succ_ne_zero _) 
       if n % 2 == 0
       then go (power * power) acc n'
@@ -27,11 +26,17 @@ instance : Field Rat where
   inv x := 1/x
   sqrt _ := .none
 
+def abs (r : Rat) : Rat := {r with num := r.num.natAbs}
+
+def round (r : Rat) : Int := 
+  let floor := r.floor
+  if abs (r - floor) ≤ (1 : Rat)/2 then floor else r.ceil
+
 end Rat
 
 namespace Matrix
 
-private def twoByTwo.inv [Field R] (M : Matrix R) : Matrix R :=
+def twoInv [Field R] (M : Matrix R) : Matrix R :=
   let det := M[0]![0]! * M[1]![1]! - M[0]![1]! * M[1]![0]!
   (Field.inv det) * #[#[M[1]![1]!, -M[0]![1]!], #[-M[1]![0]!, M[0]![0]!]]
 
