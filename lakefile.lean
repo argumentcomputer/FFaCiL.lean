@@ -16,3 +16,6 @@ require std from git
   "https://github.com/leanprover/std4/" @ "fde95b16907bf38ea3f310af406868fc6bcf48d1"
 
 lean_exe Tests.EllipticCurve
+lean_exe Tests.GLV
+
+lean_exe Benchmarks.GLV
