@@ -24,7 +24,6 @@ instance : Field Rat where
   zero := 0
   one := 1
   inv x := 1/x
-  sqrt _ := .none
 
 def abs (r : Rat) : Rat := {r with num := r.num.natAbs}
 
