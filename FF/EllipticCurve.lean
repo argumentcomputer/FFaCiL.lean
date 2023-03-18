@@ -208,6 +208,8 @@ TODO: Add more methods to `CurveGroup`. This includes things like
 * Cofactor
 -/
 
+namespace CurveGroup
+
 instance [CurveGroup K C] : Add K where
   add := CurveGroup.add 
 
@@ -246,5 +248,7 @@ open AffinePoint in
 instance : CurveGroup (AffinePoint C) C where 
   zero := infinity
   inv := neg
-  add := add
-  double := double
+  add := AffinePoint.add
+  double := AffinePoint.double
+
+end CurveGroup
