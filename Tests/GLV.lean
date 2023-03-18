@@ -1,4 +1,4 @@
-import FF.Pasta
+import FFaCiL.Pasta
 import LSpec
 
 open LSpec 

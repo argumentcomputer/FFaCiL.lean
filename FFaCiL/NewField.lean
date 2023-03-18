@@ -1,4 +1,4 @@
-import FF.PrimeField
+import FFaCiL.PrimeField
 import YatimaStdLib.AddChain
 import YatimaStdLib.Zmod
 

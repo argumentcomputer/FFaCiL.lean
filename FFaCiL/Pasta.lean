@@ -1,6 +1,6 @@
-import FF.EllipticCurve
-import FF.NewField
-import FF.Util
+import FFaCiL.EllipticCurve
+import FFaCiL.NewField
+import FFaCiL.Util
 
 private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ : Int) : ProjectivePoint C :=
   let task₁ := Task.spawn fun _ => k₁ * P
@@ -98,5 +98,3 @@ instance(priority := high) : HMul Nat Point Point where
     twoMSM P (Φ P) k₁ k₂
 
 end Vesta
-
-
