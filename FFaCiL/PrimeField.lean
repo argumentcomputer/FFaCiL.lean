@@ -26,12 +26,11 @@ multiplications, exponentiations, inversions are computationally cheaper (the ot
 incur no additional cost)
 
 Generally the user shouldn't have to worry about the specifics about wrapping and unwrapping field
-elements, but the `PrimeField.wrap` and `PrimeField.unwrap` functions are available to the end-user.
+elements, but the `NewField.wrap` and `NewField.unwrap` functions are available to the end-user.
 
 A typeclass for `PrimeField` is provided (and an instance is automatically generated using the above
 syntax) with the following functionality:
 
-* `PrimeField.wrap` and `PrimeField.unwrap` to manually deal with Montgomery form
 * Pre-computed addchains for `p`, `p - 1 / 2`
 * Efficient calculation of the Legendre symbol using `PrimeField.legendre` 
   (using a pre-computed `AddChain` for `p - 1 / 2`)
@@ -40,6 +39,9 @@ syntax) with the following functionality:
 * Batched inversion using `PrimeField.batchedInv` (replaces `n` field inversions with 1 inversion and 
   `3n` field multiplications)
 * Efficient implementation of the Tonelli-Shank algorithm for square roots using `PrimeField.sqrt?`
+
+Additionally, a `NewField` typeclass is provided to allow for low-level Montgomery optimizations
+using the `PrimeField.wrap` and `PrimeField.unwrap` methods to manually deal with Montgomery form.
 -/
 
 section newfieldclass
@@ -51,13 +53,83 @@ class PrimeField (K : Type _) extends Field K where
   twoAdicity : Nat × Nat
   legAC : Array ChainStep
   frobAC : Array ChainStep
-  wrap : K → K
-  unwrap : K → K 
   natRepr : K → Nat
   batchedExp : K → Array Nat → Array K
   batchedInv : Array K → Array K
 
+class NewField (K : Type _) extends PrimeField K where
+  wrap : K → K
+  unwrap : K → K  
+
 end newfieldclass
+
+
+/--
+Given a list of exponents `[e₁ e₂, ..., eₙ]` calculates `[base ^ e₁, base ^ e₂, ... , base ^ eₙ]`
+minimizing the number of exponentiations
+-/
+private partial def batchedExp {K : Type _} [Ring K] (base : K) (exps : Array Nat) 
+    : Array K := Id.run do
+  let mut maxExp : Nat := exps.maxD 0
+  let size := exps.size
+  let mut exps := exps
+  let mut answer := .mkArray exps.size 1
+  let mut pow := base
+
+  while maxExp > 0 do
+    maxExp := maxExp >>> 1
+    for idx in [:size] do
+      if exps[idx]! % 2 == 1 then answer := answer.set! idx (answer[idx]! * pow)
+      exps := exps.set! idx (exps[idx]! >>> 1)
+    pow := pow * pow
+
+  return answer
+
+/-- 
+Given an array of field elements `#[x₁, x₂, ... , xₙ]` calculates `#[x₁⁻¹, x₂⁻¹, ..., xₙ⁻¹]` 
+as a batched calculating using 1 field inversion (and `3n` field multiplications)
+Note: Be careful to only apply to invertible elements.
+-/
+private def batchedInv {K : Type _} [Field K] (arr : Array K) : Array K := Id.run do
+  let mut acc := 1
+  let mut muls := #[]
+
+  for num in arr do
+    muls := muls.push acc
+    acc := acc * num
+
+  let mut inv := acc⁻¹  
+  let mut answer := #[]
+  let mut idx := arr.size - 1
+  let mut done := if idx == 0 then true else false
+
+  while ! done do
+    if idx == 0 then done := true
+    let temp := inv * arr[idx]!
+    answer := answer.push (inv * muls[idx]!)
+    inv := temp
+    idx := idx - 1
+
+  return answer.reverse
+
+section zmodinstance
+
+instance : PrimeField (Zmod n) where
+  char := n
+  sqrt := fun x =>
+    let sqrt? := x.norm.tonelli n
+    match sqrt? with
+    | none => none
+    | some (sqrt, _) => some ⟨sqrt⟩
+  content := n.log2
+  twoAdicity := Nat.get2Adicity <| n - 1
+  legAC := AddChain.buildSteps (n >>> 1).minChain
+  frobAC := AddChain.buildSteps n.minChain
+  natRepr x := x.norm
+  batchedExp := batchedExp
+  batchedInv := batchedInv
+
+end zmodinstance
 
 section metaprogramming
 
@@ -427,17 +499,20 @@ macro_rules
       instance : Field $name where
         inv := $inv
 
-      instance : NewField $name := {
+      instance : PrimeField $name := {
         char := $p,
+        sqrt := fun x => Prod.fst <$> $sqrt? x,
         content := $content,
         twoAdicity := $twoAdicity,
         legAC := $legAC
         frobAC := $frobAC
-        wrap := $wrap
-        unwrap := $unwrap
         natRepr := $natRepr
         batchedExp := $batchedExp
         batchedInv := $batchedInv
+      }
+      instance : NewField $name := {
+        wrap := $wrap
+        unwrap := $unwrap
       }
       end $name
     )

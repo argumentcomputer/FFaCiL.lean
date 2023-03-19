@@ -1,15 +1,16 @@
 import FFaCiL.EllipticCurve
+import FFaCiL.GaloisField
 import FFaCiL.PrimeField
 
 class Serialise (A : Type _) where
   serialise : A → ByteArray
   deserialise : ByteArray → Option A
 
-instance : Serialise (Zmod n) where
+instance [PrimeField F] : Serialise F where
   serialise := sorry
   deserialise := sorry
 
-instance [PrimeField F] : Serialise F where
+instance [GaloisField F] : Serialise F where
   serialise := sorry
   deserialise := sorry
 
