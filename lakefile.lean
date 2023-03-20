@@ -22,3 +22,4 @@ lean_exe Tests.EllipticCurve
 lean_exe Tests.GLV
 
 lean_exe Benchmarks.GLV
+lean_exe Benchmarks.MSM
