@@ -1,5 +1,5 @@
+import FFaCiL.PrimeField
 import FFaCiL.EllipticCurve
-import FFaCiL.NewField
 import FFaCiL.Util
 
 private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ : Int) : ProjectivePoint C :=
