@@ -21,7 +21,15 @@ namespace Curve
 variable {F : Type _} [Field F] (C : Curve F)
 
 instance [ToString F] : ToString $ Curve F where
-  toString C := s!"y² = x³ + {C.a} x + {C.b}"
+  toString C :=
+    match C.a == 0, C.b == 0 with 
+      | true, true => "y² = x³"
+      | true, false => s!"y² = x³ + {C.b}"
+      | false, true => s!"y² = x³ + {C.a} x"
+      | false, false =>
+        match C.a == 1 with 
+          | true => s!"y² = x³ + x + {C.b}"
+          | false => s!"y² = x³ + {C.a} x + {C.b}"
 
 def discriminant : F := (- (16 : Nat)) * ((4 : Nat) * C.a^3 + (27 : Nat) * C.b^2)
 
