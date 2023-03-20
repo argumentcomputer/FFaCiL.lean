@@ -1,3 +1,4 @@
+import FFaCiL.Util
 import YatimaStdLib.AddChain
 import YatimaStdLib.Zmod
 
@@ -53,6 +54,7 @@ class PrimeField (K : Type _) extends Field K where
   twoAdicity : Nat × Nat
   legAC : Array ChainStep
   frobAC : Array ChainStep
+  fromNat : Nat → K
   natRepr : K → Nat
   batchedExp : K → Array Nat → Array K
   batchedInv : Array K → Array K
@@ -63,7 +65,11 @@ class NewField (K : Type _) extends PrimeField K where
 
 end newfieldclass
 
-
+instance [PrimeField K] : Random K where
+  random g :=
+    let (n, g) := randNat g 0 (PrimeField.char K) 
+    (PrimeField.fromNat n, g)                                          
+    
 /--
 Given a list of exponents `[e₁ e₂, ..., eₙ]` calculates `[base ^ e₁, base ^ e₂, ... , base ^ eₙ]`
 minimizing the number of exponentiations
@@ -125,6 +131,7 @@ instance : PrimeField (Zmod n) where
   twoAdicity := Nat.get2Adicity <| n - 1
   legAC := AddChain.buildSteps (n >>> 1).minChain
   frobAC := AddChain.buildSteps n.minChain
+  fromNat n := ⟨n⟩
   natRepr x := x.norm
   batchedExp := batchedExp
   batchedInv := batchedInv
@@ -500,16 +507,18 @@ macro_rules
         inv := $inv
 
       instance : PrimeField $name := {
-        char := $p,
-        sqrt := fun x => Prod.fst <$> $sqrt? x,
-        content := $content,
-        twoAdicity := $twoAdicity,
+        char := $p
+        sqrt := fun x => Prod.fst <$> $sqrt? x
+        content := $content
+        twoAdicity := $twoAdicity
         legAC := $legAC
         frobAC := $frobAC
+        fromNat := fun n => ⟨n, false⟩
         natRepr := $natRepr
         batchedExp := $batchedExp
         batchedInv := $batchedInv
       }
+
       instance : NewField $name := {
         wrap := $wrap
         unwrap := $unwrap
