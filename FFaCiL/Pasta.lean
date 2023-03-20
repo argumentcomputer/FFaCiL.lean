@@ -2,7 +2,13 @@ import FFaCiL.PrimeField
 import FFaCiL.EllipticCurve
 import FFaCiL.Util
 
-private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ : Int) : ProjectivePoint C :=
+private def getPair (k : Int) (transform: Matrix Rat) (v₁ v₂ : Vector Int) : Int × Int := 
+  let vec := transform.twoInv.action #[k, 0] 
+  let vec' : Vector Int := vec[0]!.round * v₁ + vec[1]!.round * v₂
+  (k - vec'[0]!, -vec'[1]!)
+
+private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ : Int) 
+    : ProjectivePoint C :=
   let task₁ := Task.spawn fun _ => k₁ * P
   let task₂ := Task.spawn fun _ => k₂ * Q
   task₁.get + task₂.get
@@ -43,14 +49,9 @@ def v₂ : Vector Int := #[0x49e69d1640a899538cb1279300000000, -0x49e69d1640f049
 
 def m : Matrix Rat := #[v₁, v₂]
 
-def getPair (k : Int) : Int × Int := 
-  let vec := m.twoInv.action #[k, 0] 
-  let vec' : Vector Int := vec[0]!.round * v₁ + vec[1]!.round * v₂
-  (k - vec'[0]!, -vec'[1]!)
-
 instance(priority := high) : HMul Nat Point Point where
   hMul n P := 
-    let (k₁, k₂) := getPair n
+    let (k₁, k₂) := getPair n m v₁ v₂
     twoMSM P (Φ P) k₁ k₂
 
 end Pallas
@@ -87,14 +88,9 @@ def v₂ : Vector Int := #[0x93cd3a2c8198e2690c7c095a00000001, 0x49e69d1640a8995
 
 def m : Matrix Rat := #[v₁, v₂]
 
-def getPair (k : Int) : Int × Int := 
-  let vec := m.twoInv.action #[k, 0] 
-  let vec' : Vector Int := vec[0]!.round * v₁ + vec[1]!.round * v₂
-  (k - vec'[0]!, -vec'[1]!)
-
 instance(priority := high) : HMul Nat Point Point where
   hMul n P := 
-    let (k₁, k₂) := getPair n
+    let (k₁, k₂) := getPair n m v₁ v₂
     twoMSM P (Φ P) k₁ k₂
 
 end Vesta
