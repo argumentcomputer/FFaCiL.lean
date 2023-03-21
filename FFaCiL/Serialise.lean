@@ -6,24 +6,20 @@ class Serialise (A : Type _) where
   serialise : A → ByteArray
   deserialise : ByteArray → Option A
 
+/- TODO:
 instance [PrimeField F] : Serialise F where
-  serialise := sorry
-  deserialise := sorry
 
 instance [GaloisField F] : Serialise F where
-  serialise := sorry
-  deserialise := sorry
+-/
 
 namespace CurveSerialise
 
 variable {F : Type _} [PrimeField F] (C : Curve F)
 
-instance : Serialise (AffinePoint C) where
-  serialise := sorry
-  deserialise := sorry
+/- TODO:
+instance [PrimeField F] : Serialise (AffinePoint C) where
 
-instance : Serialise (ProjectivePoint C) where
-  serialise := sorry
-  deserialise := sorry
+instance [GaloisField F] : Serialise (ProjectivePoint C) where
+-/
 
 end CurveSerialise
