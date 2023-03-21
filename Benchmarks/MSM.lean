@@ -19,30 +19,22 @@ instance : FixedSize (Array $ Nat × Pallas.Point) where
     return answer
   size ps := ps.size
 
-def exampel := @FixedSize.random (Array $ Nat × Pallas.Point) _ (2^9) (mkStdGen 15 |> ULift.up) |> Prod.fst
+def exampel := @FixedSize.random (Array $ Nat × Pallas.Point) _ (2^6) (mkStdGen 15 |> ULift.up) |> Prod.fst
 
--- #eval exampel
+def f : Array (Nat × Pallas.Point) → Pallas.Point := naiveMSM
 
--- #eval generateInstances exampel |>.map fun m => m.evaluate
+def g : Array (Nat × Pallas.Point) → Pallas.Point := evaluateMSM
 
-def f : Array (Nat × Pallas.Point) → Pallas.Point :=
-  fun x => naiveMSM x 
-
-def g : Array (Nat × Pallas.Point) → Pallas.Point :=
-  fun x =>
-    let instances := generateInstances x
-    let answers := instances.map fun inst => inst.evaluate
-    answers.foldl (init := .zero) fun acc P => acc + P
+#eval f exampel
+#eval g exampel
 
 instance {α : Type _} : Ord $ Array α where
   compare as bs := compare as.size bs.size
 
 def naiveBench : RandomComparison f g where
-  inputSizes := #[2^13]
+  inputSizes := Array.stdSizes 11
 
+set_option compiler.extract_closed false in
 def main (args : List String) : IO UInt32 := do
-  -- let answer := splitMSM exampel |>.get! 7 |>.fst |>.get! 0 
-  -- IO.println answer
-  -- return 0
-benchMain args naiveBench.benchmark
+  benchMain args naiveBench.benchmark
 

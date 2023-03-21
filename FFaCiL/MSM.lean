@@ -74,7 +74,7 @@ open Std
 
 variable {F : Type _} [Field F] {C : Curve F}
 
-def CHUNK_LENGTH := 4
+def CHUNK_LENGTH := 2
 
 def CHUNK_WIDTH := 8 * CHUNK_LENGTH
 
@@ -91,28 +91,42 @@ def _root_.Nat.chunk (n idx : Nat) : Nat :=
   let n' := n >>> (CHUNK_WIDTH * idx)
   n' % CHUNK_CONTENT
 
-abbrev _root_.MSMInstance {F} [Field F] (C : Curve F) := HashMap Nat (ProjectivePoint C)
+#eval 13 |>.chunk 0
+#eval 0b10001111111111111111 |>.chunk 1
+#eval 8 *2 ^ 16
+#eval 0b10000000000000000000
 
-instance : ToString $ MSMInstance C where
-  toString := fun x => s!"{x.size}"
+abbrev _root_.MSMInstance {F} [Field F] (C : Curve F) := HashMap Nat (ProjectivePoint C)
 
 def generateInstances {F} [Field F] {C : Curve F} (pairs : Array (Nat × ProjectivePoint C))
     : Array $ MSMInstance C := Id.run do
   let size := numChunks $ pairs.map fun (n, _) => n
   let mut answer := Array.mkEmpty size
   for idx in [:size] do
-    let mut inst : MSMInstance C := .empty
+    let mut inst : MSMInstance C := .empty 
     for (n, P) in pairs do
       if inst.contains $ n.chunk idx then
-        inst := inst.insert (n.chunk idx) $ inst.find! n + P
+        inst := inst.insert (n.chunk idx) $ inst.find! (n.chunk idx) + P
       else
         inst := inst.insert (n.chunk idx) P
     answer := answer.push inst
   return answer
 
-def _root_.MSMInstance.evaluate (inst : MSMInstance C) : ProjectivePoint C := 
-  inst.fold (init := .zero) fun acc key val => acc + key * val
+def _root_.MSMInstance.evaluate (inst : MSMInstance C) (offset : Nat) : ProjectivePoint C := Id.run do
+  let mut idx := CHUNK_CONTENT - 1
+  let mut counter := .zero
+  let mut answer : ProjectivePoint C := .zero
+  for _ in [0:CHUNK_CONTENT] do
+    counter := counter + inst.findD idx .zero
+    answer := answer + counter
+    idx := idx - 1
+  return (Nat.repeat ProjectivePoint.double offset) answer
+
+def evaluateMSM (pairs : Array (Nat × ProjectivePoint C)) : ProjectivePoint C :=
+  let instances := generateInstances pairs
+  let answers := instances.mapIdx fun idx inst => Task.spawn fun () => inst.evaluate (CHUNK_WIDTH * idx)
+  answers.foldl (init := .zero) fun acc P => acc + P.get
 
 end Better
-
+  
 end smallMSM
