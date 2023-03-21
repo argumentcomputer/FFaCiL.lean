@@ -12,7 +12,7 @@ Here we port some definitions from https://hackage.haskell.org/package/galois-fi
 -/
 
 /-- The structure of a Galois field on t-/
-class GaloisField (K : Type _) extends Ring K, Div K where
+class GaloisField (K : Type _) extends Field K where
   -- Characteristic `p` of field and order of prime subfield.
   char : Nat
   -- Degree `q` of field as extension field over prime subfield.
@@ -37,10 +37,6 @@ def galPow [GaloisField K] : K → Nat → K
   | _, 0 => 1
   | x, (k + 1) => x * (galPow x k)
 
--- TODO: Replace this with `fastPow`?
-instance [GaloisField K] : HPow K Nat K where
-  hPow := galPow
-
 instance [GaloisField K] : Neg K where
   neg x := 0 - x
 
@@ -51,13 +47,6 @@ instance : GaloisField (Zmod p) where
   char := p
   deg := 1
   frob r := r ^ p
-
-/-- The class of a prime subfield of a GaloisField -/
-class PrimeField (K : Type _) [GaloisField K] where
-  fromP : K → Int
-
-instance : PrimeField (Zmod p) where
-  fromP := Zmod.rep
 
 open Polynomial
 
@@ -128,7 +117,7 @@ instance [GaloisField K] : GaloisField (Extension K P) where
   hPow := polyPow
   coe n := #[n]
   sub := polySub
-  div f g := polyMul (polyInv g P) f
+  inv f := polyInv f P
   beq f g := f.norm.toArray == g.norm.toArray
   char := char K
   deg := (deg K) * degree (P)

@@ -1,4 +1,4 @@
-import FFaCiL.NewField
+import FFaCiL.PrimeField
 
 /-!
 TODO: Major items to consider before we can finally settle on this design:
@@ -247,8 +247,8 @@ open ProjectivePoint in
 instance : CurveGroup (ProjectivePoint C) C where 
   zero := infinity
   inv := fun ⟨x, y, z⟩ => ⟨x, 0 - y, z⟩ 
-  add := ProjectivePoint.add
-  double := ProjectivePoint.double
+  add := add
+  double := double
 
 open AffinePoint in
 instance : CurveGroup (AffinePoint C) C where 

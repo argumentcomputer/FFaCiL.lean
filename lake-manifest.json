@@ -14,6 +14,12 @@
     "name": "LSpec",
     "inputRev?": "88f7d23e56a061d32c7173cea5befa4b2c248b41"}},
   {"git":
+   {"url": "https://github.com/yatima-inc/LightData",
+    "subDir?": null,
+    "rev": "7492abeae41f3a469396c73e13f48cd2b8da4a02",
+    "name": "LightData",
+    "inputRev?": "7492abeae41f3a469396c73e13f48cd2b8da4a02"}},
+  {"git":
    {"url": "https://github.com/leanprover/std4/",
     "subDir?": null,
     "rev": "fde95b16907bf38ea3f310af406868fc6bcf48d1",

@@ -1,4 +1,4 @@
-import FFaCiL.NewField
+import FFaCiL.PrimeField
 import FFaCiL.EllipticCurve
 
 namespace Pasta
