@@ -1,7 +1,7 @@
-import FF.EllipticCurve
-import FF.NewField
+import FFaCiL.EllipticCurve
+import FFaCiL.PrimeField
 
-variable {F : Type _} [NewField F] (C : Curve F)
+variable {F : Type _} [PrimeField F] (C : Curve F)
 
 /--
 Find a Z for Shallue-van de Woestijne method
@@ -24,7 +24,7 @@ def findZ : F := sorry
 -/
 
 open Field in
-open NewField in
+open PrimeField in
 /--
 Shallue-van de Woestijne method.
 
