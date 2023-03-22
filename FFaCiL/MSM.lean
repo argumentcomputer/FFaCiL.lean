@@ -6,75 +6,11 @@ def naiveMSM {F : Type _} [PrimeField F] {C : Curve F} (params : Array $ Nat × 
     : ProjectivePoint C :=
   params.foldl (init := .zero) fun acc (n, p) => acc + n * p
 
-section Actions
-
-variable {F : Type _} [Field F] {C : Curve F}
-
-private def bAAction (ba : ByteArray) (P : ProjectivePoint C) : ProjectivePoint C := 
-  ba.toUInt64LE!.toNat * P -- TODO : Unsafe, assumes chunks have `size < 8`
-
-end Actions
-section MSM
-
-variable {F : Type _} [Field F] {C : Curve F}
-
-def CHUNK_LENGTH := 4
-
-def coeffsToByteArray (ns : Array Nat) : Array ByteArray :=
-  ns.map fun n => n.toByteArrayLE
-
-abbrev BASlice := ByteArray
-
-def chunk (ba : ByteArray) : Array BASlice := Id.run do
-  let mut answer := #[]
-  let mut head := 0
-  while head < ba.size do
-    answer := answer.push $ ba.slice head CHUNK_LENGTH
-    head := head + CHUNK_LENGTH
-  return answer
-
-def getChunks (ns : Array Nat) : Array (Array BASlice) :=
-  ns.map fun n => chunk n.toByteArrayLE
-
-def getMaxSize (bas : Array (Array BASlice)) : Nat := 
-  Array.maxD (bas.map fun ba => ba.size) 0
-
-def splitChunks (bas : Array (Array BASlice)) : Array (Array BASlice) := Id.run do
-  let mut answer := #[]
-  let mut subanswer := #[]
-  let max := getMaxSize bas
-  for idx in [:max] do -- TODO : Replace `bas[0]!.size` with the max size of any of the BAs
-    subanswer := #[]
-    for ba in bas do
-      subanswer := subanswer.push $ ba.getD idx (.mk #[0])
-    answer := answer.push subanswer
-
-  return answer
-
-def seedChunks : Array Nat → Array (Array BASlice) := 
-  splitChunks ∘ getChunks 
-
-def splitMSM (pnP : Array (Nat × ProjectivePoint C))
-    : Array $ (Array BASlice) × Array (ProjectivePoint C) := Id.run do
-  let coeffs := pnP.map fun p => p.fst
-  let points := pnP.map fun p => p.snd
-  let chunks := seedChunks coeffs
-  let mut answer := #[]
-  for chunk in chunks do
-    answer := answer.push (chunk, points)
-  return answer
-
-end MSM
-
-section smallMSM
-
-namespace Better
-
 open Std 
 
 variable {F : Type _} [Field F] {C : Curve F}
 
-def CHUNK_LENGTH := 2
+def CHUNK_LENGTH := 1
 
 def CHUNK_WIDTH := 8 * CHUNK_LENGTH
 
@@ -90,11 +26,6 @@ def numChunks (ns : Array Nat) : Nat :=
 def _root_.Nat.chunk (n idx : Nat) : Nat :=
   let n' := n >>> (CHUNK_WIDTH * idx)
   n' % CHUNK_CONTENT
-
-#eval 13 |>.chunk 0
-#eval 0b10001111111111111111 |>.chunk 1
-#eval 8 *2 ^ 16
-#eval 0b10000000000000000000
 
 abbrev _root_.MSMInstance {F} [Field F] (C : Curve F) := HashMap Nat (ProjectivePoint C)
 
@@ -116,7 +47,7 @@ def _root_.MSMInstance.evaluate (inst : MSMInstance C) (offset : Nat) : Projecti
   let mut idx := CHUNK_CONTENT - 1
   let mut counter := .zero
   let mut answer : ProjectivePoint C := .zero
-  for _ in [0:CHUNK_CONTENT] do
+  for _ in [1:CHUNK_CONTENT] do
     counter := counter + inst.findD idx .zero
     answer := answer + counter
     idx := idx - 1
@@ -126,7 +57,3 @@ def evaluateMSM (pairs : Array (Nat × ProjectivePoint C)) : ProjectivePoint C :
   let instances := generateInstances pairs
   let answers := instances.mapIdx fun idx inst => Task.spawn fun () => inst.evaluate (CHUNK_WIDTH * idx)
   answers.foldl (init := .zero) fun acc P => acc + P.get
-
-end Better
-  
-end smallMSM

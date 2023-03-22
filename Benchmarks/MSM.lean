@@ -19,14 +19,9 @@ instance : FixedSize (Array $ Nat × Pallas.Point) where
     return answer
   size ps := ps.size
 
-def exampel := @FixedSize.random (Array $ Nat × Pallas.Point) _ (2^6) (mkStdGen 15 |> ULift.up) |> Prod.fst
-
 def f : Array (Nat × Pallas.Point) → Pallas.Point := naiveMSM
 
 def g : Array (Nat × Pallas.Point) → Pallas.Point := evaluateMSM
-
-#eval f exampel
-#eval g exampel
 
 instance {α : Type _} : Ord $ Array α where
   compare as bs := compare as.size bs.size
@@ -37,4 +32,3 @@ def naiveBench : RandomComparison f g where
 set_option compiler.extract_closed false in
 def main (args : List String) : IO UInt32 := do
   benchMain args naiveBench.benchmark
-

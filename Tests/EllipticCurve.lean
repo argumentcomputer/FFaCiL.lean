@@ -30,7 +30,9 @@ def pOnCurveTests : TestSeq :=
 def pAddTests : TestSeq :=
   test "projective: add 1" (G + G == ⟨79, 44, 1⟩) $
   test "projective: add 2" (P + G == ⟨57, 50, 1⟩) $
-  test "projective: add 3" ((zero : ProjectivePoint SmallCurve) + zero == zero)
+  test "projective: add 3" ((zero : ProjectivePoint SmallCurve) + zero == zero) $
+  test "projective: add 4" (G + zero == G) $
+  test "projective: add 5" (zero + P == P)
 
 def pDoubleTests : TestSeq :=
   test "projective: double 1" (G + G == .double G) $
@@ -66,7 +68,9 @@ def aOnCurveTests : TestSeq :=
 def aAddTests : TestSeq :=
   test "affine: add 1" (G + G == .affine 79 44) $
   test "affine: add 2" (P + G == .affine 57 50) $
-  test "affine: add 3" ((zero : AffinePoint SmallCurve) + AffinePoint.infinity == AffinePoint.infinity )
+  test "affine: add 3" ((zero : AffinePoint SmallCurve) + AffinePoint.infinity == AffinePoint.infinity) $
+  test "affine: add 4" (G + infinity == G) $
+  test "affine: add 5" (infinity + G == G)
 
 def aDoubleTests : TestSeq :=
   test "affine: double 1" (G + G == .double G) $
