@@ -10,7 +10,7 @@ open Std
 
 variable {F : Type _} [Field F] {C : Curve F}
 
-def CHUNK_LENGTH := 1
+def CHUNK_LENGTH := 2
 
 def CHUNK_WIDTH := 8 * CHUNK_LENGTH
 

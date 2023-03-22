@@ -19,15 +19,15 @@ instance : FixedSize (Array $ Nat × Pallas.Point) where
     return answer
   size ps := ps.size
 
-def f : Array (Nat × Pallas.Point) → Pallas.Point := naiveMSM
+-- def f : Array (Nat × Pallas.Point) → Pallas.Point := naiveMSM
 
 def g : Array (Nat × Pallas.Point) → Pallas.Point := evaluateMSM
 
 instance {α : Type _} : Ord $ Array α where
   compare as bs := compare as.size bs.size
 
-def naiveBench : RandomComparison f g where
-  inputSizes := Array.stdSizes 11
+def naiveBench : FunctionAsymptotics g where
+  inputSizes := #[2^17]
 
 set_option compiler.extract_closed false in
 def main (args : List String) : IO UInt32 := do

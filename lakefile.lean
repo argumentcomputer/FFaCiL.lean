@@ -20,6 +20,7 @@ require std from git
 
 lean_exe Tests.EllipticCurve
 lean_exe Tests.GLV
+lean_exe Tests.MSM
 
 lean_exe Benchmarks.GLV
 lean_exe Benchmarks.MSM

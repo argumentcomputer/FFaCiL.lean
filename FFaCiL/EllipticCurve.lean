@@ -81,69 +81,101 @@ def norm : ProjectivePoint C → ProjectivePoint C
 
 instance  : BEq $ ProjectivePoint C where
   beq P Q :=
-    let ⟨x₁, y₁, z₁⟩ := P.norm
-    let ⟨x₂, y₂, z₂⟩ := Q.norm
-    z₁ == z₂ && y₁ == y₂ && x₁ == x₂
+    match P, Q with
+    | ⟨x₁, _, z₁⟩, ⟨x₂, _, z₂⟩ =>
+      if z₁ == 0 || z₂ == 0 then
+        x₁ == 0 && x₂ == 0
+      else
+        let ⟨X, Y, _⟩ := z₂ * P
+        let ⟨U, W, _⟩ := z₁ * Q
+        X == U && Y == W
+    -- let ⟨x₁, y₁, z₁⟩ := P.norm
+    -- let ⟨x₂, y₂, z₂⟩ := Q.norm
+    -- z₁ == z₂ && y₁ == y₂ && x₁ == x₂
 
 instance [ToString F] : ToString $ ProjectivePoint C where
   toString := fun ⟨x, y, z⟩ => s!"({x} : {y} : {z})"
 
-def double (p : ProjectivePoint C) : ProjectivePoint C := Id.run do
-  let a := C.a
-  let b := C.b
-  let b₃ := (3 : Nat) * b
-  let ⟨X, Y, Z⟩ := p
-  let mut (t₀, t₁, t₂, t₃) := (X * X, Y * Y, Z * Z, X * Y)
-  t₃ := t₃ + t₃
-  let mut Z₃ := X * Z
-  Z₃ := Z₃ + Z₃
-  let mut X₃ := a * Z₃
-  let mut Y₃ := b₃ * t₂
-  Y₃ := X₃ + Y₃
-  X₃ := t₁ - Y₃
-  Y₃ := t₁ + Y₃
-  Y₃ := X₃ * Y₃
-  X₃ := t₃ * X₃
-  Z₃ := b₃ * Z₃
-  t₂ := a * t₂
-  t₃ := t₀ - t₂
-  t₃ := a * t₃
-  t₃ := t₃ + Z₃
-  Z₃ := t₀ + t₀
-  t₀ := Z₃ + t₀
-  t₀ := t₀ + t₂
-  t₀ := t₀ * t₃
-  Y₃ := Y₃ + t₀
-  t₂ := Y * Z
-  t₂ := t₂ + t₂
-  t₀ := t₂ * t₃
-  X₃ := X₃ - t₀
-  Z₃ := t₂ * t₁
-  Z₃ := Z₃ + Z₃
-  Z₃ := Z₃ + Z₃
-  return ⟨X₃, Y₃, Z₃⟩
+def double (p : ProjectivePoint C) : ProjectivePoint C := 
+  let A := C.a * p.Z ^ 2 + (3 : Nat) * p.X ^ 2
+  let B := p.Y * p.Z
+  let C := p.X * p.Y * B
+  let D := A^2 - (8 : Nat) * C
+  let X₃ := (2 : Nat) * B * D
+  let Y₃ := A * ((4 : Nat) * C - D) - (8 : Nat) * p.Y^2 * B^2
+  let Z₃ := (8 : Nat) * B^3
+  ⟨X₃, Y₃, Z₃⟩
+-- Id.run do
+--   let a := C.a
+--   let b := C.b
+--   let b₃ := (3 : Nat) * b
+--   let ⟨X, Y, Z⟩ := p
+--   let mut (t₀, t₁, t₂, t₃) := (X * X, Y * Y, Z * Z, X * Y)
+--   t₃ := t₃ + t₃
+--   let mut Z₃ := X * Z
+--   Z₃ := Z₃ + Z₃
+--   let mut X₃ := a * Z₃
+--   let mut Y₃ := b₃ * t₂
+--   Y₃ := X₃ + Y₃
+--   X₃ := t₁ - Y₃
+--   Y₃ := t₁ + Y₃
+--   Y₃ := X₃ * Y₃
+--   X₃ := t₃ * X₃
+--   Z₃ := b₃ * Z₃
+--   t₂ := a * t₂
+--   t₃ := t₀ - t₂
+--   t₃ := a * t₃
+--   t₃ := t₃ + Z₃
+--   Z₃ := t₀ + t₀
+--   t₀ := Z₃ + t₀
+--   t₀ := t₀ + t₂
+--   t₀ := t₀ * t₃
+--   Y₃ := Y₃ + t₀
+--   t₂ := Y * Z
+--   t₂ := t₂ + t₂
+--   t₀ := t₂ * t₃
+--   X₃ := X₃ - t₀
+--   Z₃ := t₂ * t₁
+--   Z₃ := Z₃ + Z₃
+--   Z₃ := Z₃ + Z₃
+--   return ⟨X₃, Y₃, Z₃⟩
+
+instance : Neg $ ProjectivePoint C where
+  neg := fun ⟨x, y, z⟩ => ⟨x, -y, z⟩
 
 def add (p₁ p₂ : ProjectivePoint C) : ProjectivePoint C :=
-  let a := C.a
-  let b := C.b
-  match p₁, p₂ with
-  | ⟨x₁, y₁, z₁⟩, ⟨x₂, y₂, z₂⟩ =>
-    let z₁z₂ := z₁ * z₂
-    let x₁z₂x₂z₁ := x₁ * z₂ + x₂ * z₁
-    let ax₁z₂x₂z₁ := a * x₁z₂x₂z₁
-    let b3 := (3 : Nat) * b
-    let t₁ := b3 * x₁z₂x₂z₁ - a^2 * z₁z₂
-    let x₃ :=
-      (x₁ * y₂ + x₂ * y₁) * 
-      (y₂ * y₁ - ax₁z₂x₂z₁ - b3 * z₁z₂) -
-      (y₁ * z₂ + y₂ * z₁) *
-      (a * x₁ * x₂ + t₁)
-    let y₃ := ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂) *
-      (a * x₁ * x₂ + t₁) +
-      (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) * (y₁ * y₂ - ax₁z₂x₂z₁ - b3 * z₁z₂)
-    let z₃ := (y₁ * z₂ + y₂ * z₁) * (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) +
-      (x₁ * y₂ + x₂ * y₁) * ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂)
-    ⟨x₃, y₃, z₃⟩
+  -- let a := C.a
+  -- let b := C.b
+  if p₁ == p₂ then
+    double p₁
+  else if p₁ == -p₂ then
+    zero
+  else
+    match p₁, p₂ with
+    | ⟨x₁, y₁, z₁⟩, ⟨x₂, y₂, z₂⟩ =>
+      let A := y₂ * z₁ - y₁ * z₂
+      let B := x₂ * z₁ - x₁ * z₂
+      let C := A^2 * z₁ * z₂ - B^3 - (2 : Nat) * B^2 * x₁ * z₂
+      let x₃ := B * C
+      let y₃ := A * (B^2 * x₁ * z₂ - C) - B^3 * y₁ * z₂ 
+      let z₃ := B^3 * z₁ * z₂
+      ⟨x₃, y₃, z₃⟩
+      -- let z₁z₂ := z₁ * z₂
+      -- let x₁z₂x₂z₁ := x₁ * z₂ + x₂ * z₁
+      -- let ax₁z₂x₂z₁ := a * x₁z₂x₂z₁
+      -- let b3 := (3 : Nat) * b
+      -- let t₁ := b3 * x₁z₂x₂z₁ - a^2 * z₁z₂
+      -- let x₃ :=
+      --   (x₁ * y₂ + x₂ * y₁) * 
+      --   (y₂ * y₁ - ax₁z₂x₂z₁ - b3 * z₁z₂) -
+      --   (y₁ * z₂ + y₂ * z₁) *
+      --   (a * x₁ * x₂ + t₁)
+      -- let y₃ := ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂) *
+      --   (a * x₁ * x₂ + t₁) +
+      --   (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) * (y₁ * y₂ - ax₁z₂x₂z₁ - b3 * z₁z₂)
+      -- let z₃ := (y₁ * z₂ + y₂ * z₁) * (y₁ * y₂ + ax₁z₂x₂z₁ + b3 * z₁z₂) +
+      --   (x₁ * y₂ + x₂ * y₁) * ((3 : Nat) * x₁ * x₂ + a * z₁ * z₂)
+      -- ⟨x₃, y₃, z₃⟩
 
 end ProjectivePoint
 
