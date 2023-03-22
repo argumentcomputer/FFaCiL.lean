@@ -2,7 +2,7 @@ import FFaCiL.MSM
 import FFaCiL.Pasta
 import YatimaStdLib.Benchmark
 
-open Benchmark Better
+open Benchmark
 
 instance : FixedSize (Array $ Nat × Pallas.Point) where
   random size := do

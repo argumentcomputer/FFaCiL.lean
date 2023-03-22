@@ -23,11 +23,11 @@ def numChunks (ns : Array Nat) : Nat :=
   let max := maxContent ns
   max / (8 * CHUNK_LENGTH) + 1
 
-def _root_.Nat.chunk (n idx : Nat) : Nat :=
+def Nat.chunk (n idx : Nat) : Nat :=
   let n' := n >>> (CHUNK_WIDTH * idx)
   n' % CHUNK_CONTENT
 
-abbrev _root_.MSMInstance {F} [Field F] (C : Curve F) := HashMap Nat (ProjectivePoint C)
+abbrev MSMInstance {F} [Field F] (C : Curve F) := HashMap Nat (ProjectivePoint C)
 
 def generateInstances {F} [Field F] {C : Curve F} (pairs : Array (Nat × ProjectivePoint C))
     : Array $ MSMInstance C := Id.run do
@@ -43,7 +43,7 @@ def generateInstances {F} [Field F] {C : Curve F} (pairs : Array (Nat × Project
     answer := answer.push inst
   return answer
 
-def _root_.MSMInstance.evaluate (inst : MSMInstance C) (offset : Nat) : ProjectivePoint C := Id.run do
+def MSMInstance.evaluate (inst : MSMInstance C) (offset : Nat) : ProjectivePoint C := Id.run do
   let mut idx := CHUNK_CONTENT - 1
   let mut counter := .zero
   let mut answer : ProjectivePoint C := .zero
