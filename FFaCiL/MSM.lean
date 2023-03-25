@@ -53,7 +53,7 @@ def MSMInstance.evaluate (inst : MSMInstance C) (offset : Nat) : ProjectivePoint
     idx := idx - 1
   return (Nat.repeat ProjectivePoint.double offset) answer
 
-def evaluateMSM (pairs : Array (Nat × ProjectivePoint C)) : ProjectivePoint C :=
+def pippengerMSM (pairs : Array (Nat × ProjectivePoint C)) : ProjectivePoint C :=
   let instances := generateInstances pairs
   let answers := instances.mapIdx fun idx inst => Task.spawn fun () => inst.evaluate (CHUNK_WIDTH * idx)
   answers.foldl (init := .zero) fun acc P => acc + P.get

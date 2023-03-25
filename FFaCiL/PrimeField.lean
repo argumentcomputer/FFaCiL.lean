@@ -1,5 +1,5 @@
-import FFaCiL.Util
 import YatimaStdLib.AddChain
+import YatimaStdLib.Random
 import YatimaStdLib.Zmod
 
 /-!
@@ -154,15 +154,13 @@ macro_rules
       $[root_of_unity: $u?:num]?) => do
     let pNat := p.getNat
     let gNat := g.getNat
-    let (s, t) := (pNat - 1).get2Adicity
+    let (_, t) := (pNat - 1).get2Adicity
 
     let u := match u? with
       | some u => u
       | none =>
         let uNat := Nat.powMod pNat gNat t
         Lean.Syntax.mkNumLit s!"{uNat}"
-    
-    let deltaNat := Nat.powMod pNat gNat s
 
     -- Names here
     -- Pre-computed constants
@@ -507,18 +505,16 @@ macro_rules
         inv := $inv
 
       instance : PrimeField $name := {
-        char := $p
-        sqrt := fun x => Prod.fst <$> $sqrt? x
-        content := $content
-        twoAdicity := $twoAdicity
+        char := $p,
+        sqrt := fun x => Prod.fst <$> $sqrt? x,
+        content := $content,
+        twoAdicity := $twoAdicity,
         legAC := $legAC
         frobAC := $frobAC
-        fromNat := fun n => ⟨n, false⟩
         natRepr := $natRepr
         batchedExp := $batchedExp
         batchedInv := $batchedInv
       }
-
       instance : NewField $name := {
         wrap := $wrap
         unwrap := $unwrap

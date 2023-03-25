@@ -21,7 +21,7 @@ instance : FixedSize (Array $ Nat × Pallas.Point) where
 
 -- def f : Array (Nat × Pallas.Point) → Pallas.Point := naiveMSM
 
-def g : Array (Nat × Pallas.Point) → Pallas.Point := evaluateMSM
+def g : Array (Nat × Pallas.Point) → Pallas.Point := pippengerMSM
 
 instance {α : Type _} : Ord $ Array α where
   compare as bs := compare as.size bs.size

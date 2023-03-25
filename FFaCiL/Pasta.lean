@@ -1,6 +1,7 @@
 import FFaCiL.PrimeField
 import FFaCiL.EllipticCurve
-import FFaCiL.Util
+import YatimaStdLib.Matrix
+import YatimaStdLib.Rat
 
 private def getPair (k : Int) (transform: Matrix Rat) (v₁ v₂ : Vector Int) : Int × Int := 
   let vec := transform.twoInv.action #[k, 0] 
