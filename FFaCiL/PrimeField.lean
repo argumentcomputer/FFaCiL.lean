@@ -1,6 +1,7 @@
 import YatimaStdLib.AddChain
 import YatimaStdLib.Random
 import YatimaStdLib.Zmod
+import YatimaStdLib.Random
 
 /-!
 # Defining field instances with PrimeField
@@ -505,16 +506,18 @@ macro_rules
         inv := $inv
 
       instance : PrimeField $name := {
-        char := $p,
-        sqrt := fun x => Prod.fst <$> $sqrt? x,
-        content := $content,
-        twoAdicity := $twoAdicity,
+        char := $p
+        sqrt := fun x => Prod.fst <$> $sqrt? x
+        content := $content
+        twoAdicity := $twoAdicity
         legAC := $legAC
         frobAC := $frobAC
+        fromNat := fun n => ⟨n, false⟩
         natRepr := $natRepr
         batchedExp := $batchedExp
         batchedInv := $batchedInv
       }
+
       instance : NewField $name := {
         wrap := $wrap
         unwrap := $unwrap

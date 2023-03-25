@@ -21,3 +21,4 @@ lean_exe Tests.MSM
 
 lean_exe Benchmarks.GLV
 lean_exe Benchmarks.MSM
+
