@@ -2,19 +2,19 @@
  "packagesDir": "./lake-packages",
  "packages":
  [{"git":
-   {"url": "https://github.com/yatima-inc/YatimaStdLib.lean",
+   {"url": "https://github.com/lurk-lab/YatimaStdLib.lean",
     "subDir?": null,
-    "rev": "78b02f02367cdf3bfa1b65c0efbd40e56a47588b",
+    "rev": "df30d88d06e22d7c418fb8eee2996dd44cd1c547",
     "name": "YatimaStdLib",
-    "inputRev?": "78b02f02367cdf3bfa1b65c0efbd40e56a47588b"}},
+    "inputRev?": "df30d88d06e22d7c418fb8eee2996dd44cd1c547"}},
   {"git":
-   {"url": "https://github.com/yatima-inc/lspec/",
+   {"url": "https://github.com/lurk-lab/LSpec",
     "subDir?": null,
     "rev": "88f7d23e56a061d32c7173cea5befa4b2c248b41",
     "name": "LSpec",
     "inputRev?": "88f7d23e56a061d32c7173cea5befa4b2c248b41"}},
   {"git":
-   {"url": "https://github.com/yatima-inc/LightData",
+   {"url": "https://github.com/lurk-lab/LightData",
     "subDir?": null,
     "rev": "7492abeae41f3a469396c73e13f48cd2b8da4a02",
     "name": "LightData",

@@ -1,4 +1,4 @@
-import FF.Pasta
+import FFaCiL.Pasta
 import YatimaStdLib.Benchmark
 
 open Benchmark Pallas

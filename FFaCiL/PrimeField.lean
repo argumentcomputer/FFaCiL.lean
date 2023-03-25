@@ -1,6 +1,6 @@
-import FFaCiL.Util
 import YatimaStdLib.AddChain
 import YatimaStdLib.Zmod
+import YatimaStdLib.Random
 
 /-!
 # Defining field instances with PrimeField
@@ -154,15 +154,13 @@ macro_rules
       $[root_of_unity: $u?:num]?) => do
     let pNat := p.getNat
     let gNat := g.getNat
-    let (s, t) := (pNat - 1).get2Adicity
+    let (_, t) := (pNat - 1).get2Adicity
 
     let u := match u? with
       | some u => u
       | none =>
         let uNat := Nat.powMod pNat gNat t
         Lean.Syntax.mkNumLit s!"{uNat}"
-    
-    let deltaNat := Nat.powMod pNat gNat s
 
     -- Names here
     -- Pre-computed constants

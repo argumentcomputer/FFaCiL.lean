@@ -22,7 +22,15 @@ namespace Curve
 variable {F : Type _} [Field F] (C : Curve F)
 
 instance [ToString F] : ToString $ Curve F where
-  toString C := s!"y² = x³ + {C.a} x + {C.b}"
+  toString C :=
+    match C.a == 0, C.b == 0 with 
+      | true, true => "y² = x³"
+      | true, false => s!"y² = x³ + {C.b}"
+      | false, true => s!"y² = x³ + {C.a} x"
+      | false, false =>
+        match C.a == 1 with 
+          | true => s!"y² = x³ + x + {C.b}"
+          | false => s!"y² = x³ + {C.a} x + {C.b}"
 
 def discriminant : F := (- (16 : Nat)) * ((4 : Nat) * C.a^3 + (27 : Nat) * C.b^2)
 
@@ -258,17 +266,15 @@ instance [CurveGroup K C] : HMul Int K K where
     | .ofNat n => n * p
     | .negSucc n => (n + 1) * (- p)
 
-open ProjectivePoint in
 instance : CurveGroup (ProjectivePoint C) C where 
-  zero := infinity
-  inv := fun ⟨x, y, z⟩ => ⟨x, 0 - y, z⟩ 
+  zero := ProjectivePoint.infinity
+  inv := fun ⟨x, y, z⟩ => ⟨x, -y, z⟩ 
   add := ProjectivePoint.add
   double := ProjectivePoint.double
 
-open AffinePoint in
 instance : CurveGroup (AffinePoint C) C where 
-  zero := infinity
-  inv := neg
+  zero := AffinePoint.infinity
+  inv := AffinePoint.neg
   add := AffinePoint.add
   double := AffinePoint.double
 
