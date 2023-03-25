@@ -1,16 +1,17 @@
 import FFaCiL.PrimeField
 
 /-!
-TODO: Major items to consider before we can finally settle on this design:
-* Does the design allow for specific optimizations for specific curves?
-  (for example, GLV optimization for scalar mul?)
+# Elliptic Curves and EC arithmetic
+
+TODO: Add file docstring
+
+## TODOs:
+* Add different curve forms (Weierstrass, Jacobian)
 -/
 
 /--
 Curves with Weierstrass form satisfying the equation `y² = x³ + a x + b`
 for a prime field `F` such that `char K > 3`
-TODO: Add
-* different forms (Weierstrass, Jacobian)
 -/
 structure Curve (F : Type _) [Field F] where
   a : F
@@ -37,13 +38,6 @@ def j : F := (1728 : Nat) * C.a^3 / ((4 : Nat) * C.discriminant)
 
 end Curve
 
-
-/-
-TODO: Add more curve point operations
-* Hash to curve
-* random curve point
--/
-
 structure ProjectivePoint {F : Type _} [Field F] (C : Curve F) where
   X : F
   Y : F
@@ -61,6 +55,18 @@ abbrev zero : ProjectivePoint C := infinity
 
 instance : Inhabited $ ProjectivePoint C where
   default := infinity  
+
+open Random in
+partial def randomAux [PrimeField F] {gen : Type _} [Inhabited gen] [RandomGen gen] (g : gen) 
+    : (ProjectivePoint C) × gen :=
+  let (X, g) := random g
+  let (pos, g) := randBool g
+  match PrimeField.sqrt (X^3 + C.a * X + C.b) with
+  | some Y => if pos then (⟨X, Y, 1⟩, g) else (⟨X, -Y, 1⟩, g)
+  | none => randomAux g
+
+instance [PrimeField F] : Random $ ProjectivePoint C where
+  random g := randomAux g
 
 def onCurve (C : Curve F) (x y z : F) : Bool := z * y^2 == x^3 + C.a * x * z^2 + C.b * z^3
 
@@ -164,6 +170,9 @@ instance [ToString F] : ToString (AffinePoint C) where
 
 namespace AffinePoint
 
+instance : Inhabited $ AffinePoint C where
+  default := infinity
+
 def zero : AffinePoint C := infinity
 
 def neg : AffinePoint C → AffinePoint C 
@@ -193,6 +202,18 @@ def add {F : Type _} [Field F] {C : Curve F}
 
 def onCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
 
+open Random in
+partial def randomAux [PrimeField F] {gen : Type _} [Inhabited gen] [RandomGen gen] (g : gen) 
+    : (AffinePoint C) × gen :=
+  let (X, g) := random g
+  let (pos, g) := randBool g
+  match PrimeField.sqrt (X^3 + C.a * X + C.b) with
+  | some Y => if pos then (affine X Y, g) else (affine X (-Y), g)
+  | none => randomAux g
+
+instance [PrimeField F] : Random $ AffinePoint C where
+  random g := randomAux g
+
 end AffinePoint
 
 -- variable {F K : Type _} [Field F] (C : Curve F) 
@@ -215,6 +236,8 @@ TODO: Add more methods to `CurveGroup`. This includes things like
 * Order
 * Cofactor
 -/
+
+namespace CurveGroup
 
 instance [CurveGroup K C] : Add K where
   add := CurveGroup.add 
@@ -243,16 +266,16 @@ instance [CurveGroup K C] : HMul Int K K where
     | .ofNat n => n * p
     | .negSucc n => (n + 1) * (- p)
 
-open ProjectivePoint in
 instance : CurveGroup (ProjectivePoint C) C where 
-  zero := infinity
-  inv := fun ⟨x, y, z⟩ => ⟨x, 0 - y, z⟩ 
-  add := add
-  double := double
+  zero := ProjectivePoint.infinity
+  inv := fun ⟨x, y, z⟩ => ⟨x, -y, z⟩ 
+  add := ProjectivePoint.add
+  double := ProjectivePoint.double
 
-open AffinePoint in
 instance : CurveGroup (AffinePoint C) C where 
-  zero := infinity
-  inv := neg
-  add := add
-  double := double
+  zero := AffinePoint.infinity
+  inv := AffinePoint.neg
+  add := AffinePoint.add
+  double := AffinePoint.double
+
+end CurveGroup
