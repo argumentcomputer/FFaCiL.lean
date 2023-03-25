@@ -89,47 +89,59 @@ def norm : ProjectivePoint C → ProjectivePoint C
 
 instance  : BEq $ ProjectivePoint C where
   beq P Q :=
-    let ⟨x₁, y₁, z₁⟩ := P.norm
-    let ⟨x₂, y₂, z₂⟩ := Q.norm
-    z₁ == z₂ && y₁ == y₂ && x₁ == x₂
+    match P, Q with
+    | ⟨x₁, _, z₁⟩, ⟨x₂, _, z₂⟩ =>
+      if z₁ == 0 || z₂ == 0 then
+        x₁ == 0 && x₂ == 0
+      else
+        let ⟨X, Y, _⟩ := z₂ * P
+        let ⟨U, W, _⟩ := z₁ * Q
+        X == U && Y == W
+    -- let ⟨x₁, y₁, z₁⟩ := P.norm
+    -- let ⟨x₂, y₂, z₂⟩ := Q.norm
+    -- z₁ == z₂ && y₁ == y₂ && x₁ == x₂
 
 instance [ToString F] : ToString $ ProjectivePoint C where
   toString := fun ⟨x, y, z⟩ => s!"({x} : {y} : {z})"
 
-def double (p : ProjectivePoint C) : ProjectivePoint C := Id.run do
-  let a := C.a
-  let b := C.b
-  let b₃ := (3 : Nat) * b
-  let ⟨X, Y, Z⟩ := p
-  let mut (t₀, t₁, t₂, t₃) := (X * X, Y * Y, Z * Z, X * Y)
-  t₃ := t₃ + t₃
-  let mut Z₃ := X * Z
-  Z₃ := Z₃ + Z₃
-  let mut X₃ := a * Z₃
-  let mut Y₃ := b₃ * t₂
-  Y₃ := X₃ + Y₃
-  X₃ := t₁ - Y₃
-  Y₃ := t₁ + Y₃
-  Y₃ := X₃ * Y₃
-  X₃ := t₃ * X₃
-  Z₃ := b₃ * Z₃
-  t₂ := a * t₂
-  t₃ := t₀ - t₂
-  t₃ := a * t₃
-  t₃ := t₃ + Z₃
-  Z₃ := t₀ + t₀
-  t₀ := Z₃ + t₀
-  t₀ := t₀ + t₂
-  t₀ := t₀ * t₃
-  Y₃ := Y₃ + t₀
-  t₂ := Y * Z
-  t₂ := t₂ + t₂
-  t₀ := t₂ * t₃
-  X₃ := X₃ - t₀
-  Z₃ := t₂ * t₁
-  Z₃ := Z₃ + Z₃
-  Z₃ := Z₃ + Z₃
-  return ⟨X₃, Y₃, Z₃⟩
+def double (p : ProjectivePoint C) : ProjectivePoint C := 
+  Id.run do
+    let a := C.a
+    let b := C.b
+    let b₃ := (3 : Nat) * b
+    let ⟨X, Y, Z⟩ := p
+    let mut (t₀, t₁, t₂, t₃) := (X * X, Y * Y, Z * Z, X * Y)
+    t₃ := t₃ + t₃
+    let mut Z₃ := X * Z
+    Z₃ := Z₃ + Z₃
+    let mut X₃ := a * Z₃
+    let mut Y₃ := b₃ * t₂
+    Y₃ := X₃ + Y₃
+    X₃ := t₁ - Y₃
+    Y₃ := t₁ + Y₃
+    Y₃ := X₃ * Y₃
+    X₃ := t₃ * X₃
+    Z₃ := b₃ * Z₃
+    t₂ := a * t₂
+    t₃ := t₀ - t₂
+    t₃ := a * t₃
+    t₃ := t₃ + Z₃
+    Z₃ := t₀ + t₀
+    t₀ := Z₃ + t₀
+    t₀ := t₀ + t₂
+    t₀ := t₀ * t₃
+    Y₃ := Y₃ + t₀
+    t₂ := Y * Z
+    t₂ := t₂ + t₂
+    t₀ := t₂ * t₃
+    X₃ := X₃ - t₀
+    Z₃ := t₂ * t₁
+    Z₃ := Z₃ + Z₃
+    Z₃ := Z₃ + Z₃
+    return ⟨X₃, Y₃, Z₃⟩
+
+instance : Neg $ ProjectivePoint C where
+  neg := fun ⟨x, y, z⟩ => ⟨x, -y, z⟩
 
 def add (p₁ p₂ : ProjectivePoint C) : ProjectivePoint C :=
   let a := C.a
@@ -279,3 +291,13 @@ instance : CurveGroup (AffinePoint C) C where
   double := AffinePoint.double
 
 end CurveGroup
+
+def Curve.points {F} [PrimeField F] (C: Curve F) : Array (ProjectivePoint C) := Id.run do
+  let mut answer := #[.zero]
+  for x in [:PrimeField.char F] do
+    match PrimeField.sqrt ((x : F)^3 + C.a * x + C.b) with
+    | none => continue
+    | some s => 
+      answer := answer.push ⟨x, s, 1⟩
+      answer := answer.push ⟨x, -s, 1⟩
+  return answer

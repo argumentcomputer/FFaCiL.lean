@@ -1,4 +1,5 @@
 import YatimaStdLib.AddChain
+import YatimaStdLib.Random
 import YatimaStdLib.Zmod
 import YatimaStdLib.Random
 

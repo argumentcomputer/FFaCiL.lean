@@ -5,7 +5,6 @@ def Pallas.G : Point := .mkD
 0x3fe2f0feb60f920d4e7f06867da64339010388ac84b3395bfefc948e31fb1d4c
 0x338fdec7c16c1871b4973f0be5b0c0ffbbe32e969ebf106c73601af301d235ee
 1
-
 open Benchmark Pallas
 
 def f₁ : Nat → Point := (· * G)
