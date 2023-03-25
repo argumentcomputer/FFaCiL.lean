@@ -291,3 +291,13 @@ instance : CurveGroup (AffinePoint C) C where
   double := AffinePoint.double
 
 end CurveGroup
+
+def Curve.points {F} [PrimeField F] (C: Curve F) : Array (ProjectivePoint C) := Id.run do
+  let mut answer := #[.zero]
+  for x in [:PrimeField.char F] do
+    match PrimeField.sqrt ((x : F)^3 + C.a * x + C.b) with
+    | none => continue
+    | some s => 
+      answer := answer.push ⟨x, s, 1⟩
+      answer := answer.push ⟨x, -s, 1⟩
+  return answer
