@@ -80,3 +80,12 @@ def swm (u : F) : AffinePoint C := Id.run do
   let e₃ := Nat.mod (natRepr u) 2 == Nat.mod (natRepr y) 2
   y := if e₃ then y else -y
   return .affine x y
+
+instance : Hashable F where
+  hash := sorry
+
+instance : Hashable (AffinePoint C) where
+  hash := sorry
+
+instance : Hashable (ProjectivePoint C) where
+  hash := sorry
