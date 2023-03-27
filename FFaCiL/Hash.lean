@@ -3,25 +3,31 @@ import FFaCiL.PrimeField
 
 variable {F : Type _} [PrimeField F] (C : Curve F)
 
+def PrimeField.isSquare (a : F) : Bool :=
+  match sqrt a with
+  | none => false
+  | some _ => true
+
+open PrimeField in 
 /--
 Find a Z for Shallue-van de Woestijne method
 -/
-def findZ : F := sorry
-/-
-  Id.run do
+def findZ : F := Id.run do
   let g := fun x => x^3 + C.a * x + C.b
   let h := fun z => - ((3 : Nat) * z^2 + (4 : Nat) * C.a) / ((4 : Nat) * g z)
   let mut ctr : F := 1
     while true do
-      for Z_cand in [ctr:-ctr] do
-        if g Z_cand == 0 then continue
-        else
-        if h Z_cand == 0 then continue
-        else not (h Z_cand).isSquare then continue
-        else if (g Z_cand).isSquare || g(-Z_cand / (2 : Nat)).isSquare then
-        return Z_cand
+      for Z_cand in [ctr, -ctr] do
+        if g Z_cand == 0 then 
+          continue
+        else if h Z_cand == 0 then 
+          continue
+        else if not $ isSquare (h Z_cand) then 
+          continue
+        else if isSquare (g Z_cand) || isSquare (g (-Z_cand / (2 : Nat))) then
+          return Z_cand
       ctr := ctr + 1
--/
+  return ctr
 
 open Field in
 open PrimeField in
@@ -32,10 +38,10 @@ Based on https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-10.html#s
 -/
 def swm (u : F) : AffinePoint C := Id.run do
   let g := fun x => x^3 + C.a * x + C.b
-  let z : F := findZ
-  let c₁ := g findZ
+  let z : F := findZ C
+  let c₁ := g z
   let c₂ := -z / (2 : Nat)
-  let c₃ := Option.getD (sqrt (- g findZ * ((3 : Nat) * z^2 + (4 : Nat) * C.a))) 0
+  let c₃ := Option.getD (sqrt (- g z * ((3 : Nat) * z^2 + (4 : Nat) * C.a))) 0
   let c₄ := - (4 : Nat) * g z / ((3 : Nat) * z^2 + (4 : Nat) * C.a)
   let mut tv₁ := u^2
   tv₁ := tv₁ * c₁
