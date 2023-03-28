@@ -60,6 +60,11 @@ class PrimeField (K : Type _) extends Field K where
   batchedExp : K → Array Nat → Array K
   batchedInv : Array K → Array K
 
+def PrimeField.isSquare [PrimeField K] (k : K) : Bool :=
+  match sqrt k with
+    | none => false
+    | _    => true
+
 class NewField (K : Type _) extends PrimeField K where
   wrap : K → K
   unwrap : K → K  
