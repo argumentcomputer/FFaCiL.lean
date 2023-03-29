@@ -23,10 +23,7 @@ instance proj : Encodable (ProjectivePoint C) LightData where
   decode := sorry
 
 instance : Encodable (AffinePoint C) LightData where
-  encode a :=
-    match a with
-      | .infinity => sorry
-      | .affine x y => _
-  decode := sorry
+  encode a := Encodable.encode $ AffinePoint.toProjective a
+  decode a := Except.map ProjectivePoint.toAffine (Encodable.decode a)
 
 end CurveSerialise
