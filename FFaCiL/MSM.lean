@@ -2,6 +2,9 @@ import FFaCiL.EllipticCurve
 import YatimaStdLib.ByteArray
 import Std.Data.HashMap.Basic
 
+/--
+The naive implementation of multi-scalar implementation.
+-/
 def naiveMSM {F : Type _} [PrimeField F] {C : Curve F} (params : Array $ Nat × ProjectivePoint C )
     : ProjectivePoint C :=
   params.foldl (init := .zero) fun acc (n, p) => acc + n * p
@@ -27,8 +30,14 @@ def Nat.chunk (n idx : Nat) : Nat :=
   let n' := n >>> (CHUNK_WIDTH * idx)
   n' % CHUNK_CONTENT
 
+/--
+The MSM instance is a hash map of projective points labelled by naturals.
+-/
 abbrev MSMInstance {F} [Field F] (C : Curve F) := HashMap Nat (ProjectivePoint C)
 
+/--
+Generates an `MSMInstance` for an array storing tuples of naturals and field elements.
+-/
 def generateInstances {F} [Field F] {C : Curve F} (pairs : Array (Nat × ProjectivePoint C))
     : Array $ MSMInstance C := Id.run do
   let size := numChunks $ pairs.map fun (n, _) => n
@@ -43,6 +52,9 @@ def generateInstances {F} [Field F] {C : Curve F} (pairs : Array (Nat × Project
     answer := answer.push inst
   return answer
 
+/--
+The MSM instance evaluation to a projective point.
+-/
 def MSMInstance.evaluate (inst : MSMInstance C) (offset : Nat) : ProjectivePoint C := Id.run do
   let mut idx := CHUNK_CONTENT - 1
   let mut counter := .zero
@@ -53,6 +65,9 @@ def MSMInstance.evaluate (inst : MSMInstance C) (offset : Nat) : ProjectivePoint
     idx := idx - 1
   return (Nat.repeat ProjectivePoint.double offset) answer
 
+/--
+Pippenger's algorithm for the optimised multi-scalar multiplication via `MSMInstance.evaluate`.
+-/
 def pippengerMSM (pairs : Array (Nat × ProjectivePoint C)) : ProjectivePoint C :=
   let instances := generateInstances pairs
   let answers := instances.mapIdx fun idx inst => Task.spawn fun () => inst.evaluate (CHUNK_WIDTH * idx)
