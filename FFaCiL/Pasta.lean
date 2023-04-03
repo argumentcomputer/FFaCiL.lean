@@ -3,7 +3,7 @@ import FFaCiL.EllipticCurve
 import YatimaStdLib.Rat
 import YatimaStdLib.Matrix
 
-private def getPair (k : Int) (transform: Matrix Rat) (v₁ v₂ : Vector Int) : Int × Int := 
+private def getPair (k : Int) (transform : Matrix Rat) (v₁ v₂ : Vector Int) : Int × Int := 
   let vec := transform.twoInv.action #[k, 0] 
   let vec' : Vector Int := vec[0]!.round * v₁ + vec[1]!.round * v₂
   (k - vec'[0]!, -vec'[1]!)
@@ -14,14 +14,23 @@ private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ 
   let task₂ := Task.spawn fun _ => k₂ * Q
   task₁.get + task₂.get
 
+/--
+The order of the Pallas scalar field.
+-/
 def Pallas.p : Nat := 0x40000000000000000000000000000000224698fc094cf91b992d30ed00000001 
 
+/--
+The order of the Vesta scalar field.
+-/
 def Vesta.q : Nat := 0x40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001 
 
 namespace Pallas
 
 abbrev F := Zmod p 
 
+/--
+The Pasta curve is an elliptic curve of the Weierstrass form `y² = x³ + 5`
+-/
 def Curve : Curve F := {a := 0, b := 5}
 
 abbrev Point := ProjectivePoint Curve
