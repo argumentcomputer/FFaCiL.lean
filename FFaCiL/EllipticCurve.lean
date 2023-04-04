@@ -185,6 +185,10 @@ namespace AffinePoint
 instance : Inhabited $ AffinePoint C where
   default := infinity
 
+def onCurve : AffinePoint C → Bool
+  | infinity => true
+  | affine x y => y^2 == x^3 + C.a * x + C.b
+
 def zero : AffinePoint C := infinity
 
 def neg : AffinePoint C → AffinePoint C 
@@ -212,7 +216,7 @@ def add {F : Type _} [Field F] {C : Curve F}
       let x₃ := (lambda^2 - x₁ - x₂)
       .affine x₃ (lambda*(x₁ - x₃) - y₁)
 
-def onCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
+def fieldEltsOnCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
 
 open Random in
 partial def randomAux [PrimeField F] {gen : Type _} [Inhabited gen] [RandomGen gen] (g : gen) 
