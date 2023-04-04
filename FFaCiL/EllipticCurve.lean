@@ -44,7 +44,6 @@ def j : F := (1728 : Nat) * C.a^3 / ((4 : Nat) * C.discriminant)
 
 end Curve
 
-
 /--
 The type of points on a projective plane.
 -/
@@ -61,7 +60,6 @@ variable {F : Type _} [Field F] {C : Curve F}
 Checks if a given point is at infinity.
 -/
 def isInfinity (P : ProjectivePoint C) := P.X == 0 && P.Y == 1 && P.Z == 0
-
 
 /--
 The point at infinity of a projective curve.
@@ -109,7 +107,7 @@ def mkD (x y z : F) : ProjectivePoint C :=
   if onCurve C x y z then ⟨x, y, z⟩ else default
 
 /--
-Scales a point
+Scales a point, given `f : F`, `scale : ⟨x, y, z⟩ ↦ ⟨f * x, f * y, f * z⟩`.
 -/
 def scale (f : F) : ProjectivePoint C → ProjectivePoint C
   | ⟨x, y, z⟩ => ⟨f * x, f * y, f * z⟩
@@ -118,7 +116,8 @@ instance : HMul F (ProjectivePoint C) (ProjectivePoint C) where
   hMul := scale
 
 /--
-Point normalisation: if `z ≠ 0`, then `norm : ⟨ x, y, z⟩ ↦ ⟨ z⁻¹ * x, z⁻¹ * y, 1⟩`
+Point normalisation: if `z ≠ 0`, then `norm : ⟨x, y, z⟩ ↦ ⟨ z⁻¹ * x, z⁻¹ * y, 1⟩`,
+and `infinity` otherwise
 -/
 def norm : ProjectivePoint C → ProjectivePoint C
   | P@⟨_, _, z⟩ =>
