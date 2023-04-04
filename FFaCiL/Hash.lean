@@ -3,11 +3,6 @@ import FFaCiL.PrimeField
 
 variable {F : Type _} [PrimeField F] (C : Curve F)
 
-def PrimeField.isSquare (a : F) : Bool :=
-  match sqrt a with
-  | none => false
-  | some _ => true
-
 open PrimeField in 
 /--
 Find a Z for Shallue-van de Woestijne method
