@@ -310,7 +310,7 @@ instance [PrimeField F] : Random $ AffinePoint C where
 end AffinePoint
 
 /--
-Converts a normalised projective point to the affine one.
+Normalizes a projective point to the standard affine chart.
 -/
 def ProjectivePoint.toAffine (P : ProjectivePoint C) : AffinePoint C :=
   let P' := P.norm
