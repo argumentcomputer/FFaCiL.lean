@@ -273,8 +273,7 @@ def double [Field F] {C : Curve F} :
   | infinity => infinity
 
 /--
-Affine point addition, based on
-Handbook of elliptic and hyperelliptic curve cryptography by Henri Cohen, et al., 13.2.1.a.
+Affine point addition, based on https://eprint.iacr.org/2015/1060.pdf.
 -/
 def add {F : Type _} [Field F] {C : Curve F} 
   : AffinePoint C → AffinePoint C → AffinePoint C
