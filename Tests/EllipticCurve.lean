@@ -62,8 +62,8 @@ def P : AffinePoint SmallCurve := .affine 98 24
 open AffinePoint
 
 def aOnCurveTests : TestSeq :=
-  test "affine: onCurve" (AffinePoint.onCurve SmallCurve 52 74) $
-  test "affine: notOnCurve" (not $ AffinePoint.onCurve SmallCurve 98 25)
+  test "affine: onCurve" (AffinePoint.fieldEltsOnCurve SmallCurve 52 74) $
+  test "affine: notOnCurve" (not $ AffinePoint.fieldEltsOnCurve SmallCurve 98 25)
 
 def aAddTests : TestSeq :=
   test "affine: add 1" (G + G == .affine 79 44) $
@@ -86,21 +86,7 @@ def aSMultests : TestSeq :=
   test "affine: smul 97" (97 * P == P)
 
 end AffineCase
-
 end smalltest
-
--- TODO: Add these kinds of "tests" to the Benchmarking suite
--- section notsobigtest
-
--- abbrev MediumField := Zmod 0x6fe7b597
-
--- end notsobigtest
-
--- section bigtest
-
--- abbrev BigField := Zmod 0x4c4b2d1587029f7d01d6c6c399c235c544ef233215b42392c6e2838fb6cefd51
-
--- end bigtest
 
 open SmallCurve
 open AffineCase

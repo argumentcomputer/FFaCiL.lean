@@ -240,11 +240,18 @@ namespace AffinePoint
 
 instance : Inhabited $ AffinePoint C where
   default := infinity
+/-
+Checks whether an affine point is on the curve `C`.
+-/
+def onCurve : AffinePoint C → Bool
+  | infinity => true
+  | affine x y => y^2 == x^3 + C.a * x + C.b
 
 /--
 The zero element is the point at infinity.
 -/
 def zero : AffinePoint C := infinity
+
 
 /--
 Affine point negation
@@ -284,7 +291,7 @@ def add {F : Type _} [Field F] {C : Curve F}
 /--
 Checks if a give tuple of field elements forms an affine point for the curve `C`.
 -/
-def onCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
+def fieldEltsOnCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
 
 open Random in
 /--
