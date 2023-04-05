@@ -152,7 +152,7 @@ inductive Residue where
 deriving Repr
 
 /--
-Given `x : K`, legendreSymbol checks if `x` is a square and computes the Legendre symbol of `x`.
+Given `x : K`, `legendreSymbol` checks if `x` is a square by computing the Legendre symbol of `x`.
 -/
 def legendreSymbol [GaloisField K] [BEq K] (x : K) : Residue :=
   let pow := (char K) ^ (deg K) >>> 1

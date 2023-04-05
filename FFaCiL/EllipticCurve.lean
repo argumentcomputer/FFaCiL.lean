@@ -3,10 +3,10 @@ import FFaCiL.PrimeField
 /-!
 # Elliptic Curves and EC arithmetic
 
-TODO: Add file docstring
+This module defines elliptic curves, and the arithmetic on their points.
 
 ## TODOs:
-* Add different curve forms (Weierstrass, Jacobian)
+* Add different curve forms (Jacobian, Edwards, etc...)
 -/
 
 /--
@@ -38,14 +38,14 @@ The discriminant of an elliptic curve.
 def discriminant : F := (- (16 : Nat)) * ((4 : Nat) * C.a^3 + (27 : Nat) * C.b^2)
 
 /--
-The absolute invariant of an elliptic curve.
+The `j`-invariant of an elliptic curve.
 -/
 def j : F := (1728 : Nat) * C.a^3 / ((4 : Nat) * C.discriminant)
 
 end Curve
 
 /--
-The type of points on a projective plane.
+The type of points on the projective plane.
 -/
 structure ProjectivePoint {F : Type _} [Field F] (C : Curve F) where
   X : F
@@ -57,7 +57,7 @@ namespace ProjectivePoint
 variable {F : Type _} [Field F] {C : Curve F}
 
 /--
-Checks if a given point is at infinity.
+Checks if a given point is at infinity for a curved in Weierstrass form.
 -/
 def isInfinity (P : ProjectivePoint C) := P.X == 0 && P.Y == 1 && P.Z == 0
 
@@ -101,7 +101,7 @@ def mk? (x y z : F) : Option $ ProjectivePoint C :=
   if onCurve C x y z then some ⟨x, y, z⟩ else none
 
 /--
-Similar to `mk?` but returns `infinity` if a triple is not well-formed.
+Similar to `mk?` but returns the default `infinity` if a triple is not well-formed.
 -/
 def mkD (x y z : F) : ProjectivePoint C :=
   if onCurve C x y z then ⟨x, y, z⟩ else default
@@ -137,9 +137,6 @@ instance  : BEq $ ProjectivePoint C where
         let ⟨X, Y, _⟩ := z₂ * P
         let ⟨U, W, _⟩ := z₁ * Q
         X == U && Y == W
-    -- let ⟨x₁, y₁, z₁⟩ := P.norm
-    -- let ⟨x₂, y₂, z₂⟩ := Q.norm
-    -- z₁ == z₂ && y₁ == y₂ && x₁ == x₂
 
 instance [ToString F] : ToString $ ProjectivePoint C where
   toString := fun ⟨x, y, z⟩ => s!"({x} : {y} : {z})"
@@ -222,10 +219,9 @@ The algebraic data type of affine points.
 -/
 inductive AffinePoint {F : Type _} [Field F] (C : Curve F) where
   /--
-  An affine point that stores a pair of coefficients.
+  An affine point that stores a pair of coefficients for finite points.
   -/
   | affine (X : F) (Y : F) : AffinePoint C
-
   /--
   The point at infinity.
   -/
@@ -286,7 +282,7 @@ def add {F : Type _} [Field F] {C : Curve F}
       .affine x₃ (lambda*(x₁ - x₃) - y₁)
 
 /--
-Checks if a give tuple of field elements forms an affine point.
+Checks if a give tuple of field elements forms an affine point for the curve `C`.
 -/
 def onCurve (C : Curve F) (x y : F) : Bool := y * y == (x * x + C.a) * x + C.b
 
@@ -315,7 +311,7 @@ def ProjectivePoint.toAffine (P : ProjectivePoint C) : AffinePoint C :=
   if P.Z == 0 then .infinity else .affine P'.X P'.Y
 
 /--
-Converts an affine point to the projective one.
+Converts an affine point to a projective one.
 -/
 def AffinePoint.toProjective : AffinePoint C → ProjectivePoint C
   | infinity => .infinity
@@ -344,6 +340,7 @@ class CurveGroup {F : outParam $ Type _} [Field F] (K : Type _) (C : outParam $ 
   Doubling
   -/
   double : K → K
+
 /-
 TODO: Add more methods to `CurveGroup`. This includes things like
 * Order
@@ -394,7 +391,7 @@ instance : CurveGroup (AffinePoint C) C where
 end CurveGroup
 
 /--
-Given a curve `C`, `Curve.points` generates the array of all projective points belonging to `C`.
+Given a curve `C`, `Curve.points` generates the array of all projective points of `C`.
 -/
 def Curve.points {F} [PrimeField F] (C : Curve F) : Array (ProjectivePoint C) := Id.run do
   let mut answer := #[.zero]
