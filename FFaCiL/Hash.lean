@@ -13,11 +13,13 @@ See https://eprint.iacr.org/2022/759.pdf.
 
 variable {F : Type _} [PrimeField F] (C : Curve F)
 
-open PrimeField in 
+open PrimeField (isSquare) in 
 /--
-Find a Z for Shallue-van de Woestijne method
+Find a Z for Shallue-van de Woestijne method.
+
+https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-10.html#section-h.1
 -/
-def findZ : F := Id.run do
+private def findZ : F := Id.run do
   let g := fun x => x^3 + C.a * x + C.b
   let h := fun z => - ((3 : Nat) * z^2 + (4 : Nat) * C.a) / ((4 : Nat) * g z)
   let mut ctr : F := 1
@@ -34,14 +36,14 @@ def findZ : F := Id.run do
       ctr := ctr + 1
   return ctr
 
-open Field in
-open PrimeField in
+open Field (inv) in
+open PrimeField (sqrt natRepr) in
 /--
 Shallue-van de Woestijne method.
 
 Based on https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-10.html#straightline-svdw
 -/
-def swm (u : F) : AffinePoint C := Id.run do
+def genPoint (u : F) : AffinePoint C := Id.run do
   let g := fun x => x^3 + C.a * x + C.b
   let z : F := findZ C
   let c₁ := g z
