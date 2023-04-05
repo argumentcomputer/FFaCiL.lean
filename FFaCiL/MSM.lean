@@ -84,7 +84,7 @@ def MSMInstance.evaluate (inst : MSMInstance C) (offset : Nat) : ProjectivePoint
 
 /--
 Pippenger's algorithm for recombining the separate evaluations from `MSMInstance.evaluate`.
-This implementation is parallelized and 
+This implementation is parallelized and evaluates each `MSMInstance` as a separate task.
 -/
 def pippengerMSM (pairs : Array (Nat × ProjectivePoint C)) : ProjectivePoint C :=
   let instances := generateInstances pairs
