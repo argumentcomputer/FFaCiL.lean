@@ -1,6 +1,16 @@
 import FFaCiL.EllipticCurve
 import FFaCiL.PrimeField
 
+/-!
+# Shallue-van de Woestijne method
+
+Shallue-van de Woestijne method is an algorithm allowing representing
+an elliptic curve point (of Weierstrass form) as an element of the 
+underlying scalar field.
+
+See https://eprint.iacr.org/2022/759.pdf.
+-/
+
 variable {F : Type _} [PrimeField F] (C : Curve F)
 
 open PrimeField in 
