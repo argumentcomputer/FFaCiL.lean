@@ -3,7 +3,13 @@ import FFaCiL.EllipticCurve
 import YatimaStdLib.Rat
 import YatimaStdLib.Matrix
 
-private def getPair (k : Int) (transform: Matrix Rat) (v₁ v₂ : Vector Int) : Int × Int := 
+/-!
+# Pasta Curves
+
+In this module we define the Pasta curves, and implement the GLV optimization for their scalar
+multiplication.
+-/
+private def getPair (k : Int) (transform : Matrix Rat) (v₁ v₂ : Vector Int) : Int × Int := 
   let vec := transform.twoInv.action #[k, 0] 
   let vec' : Vector Int := vec[0]!.round * v₁ + vec[1]!.round * v₂
   (k - vec'[0]!, -vec'[1]!)
@@ -14,14 +20,26 @@ private def twoMSM [Field F] {C : Curve F} (P Q : ProjectivePoint C) (k₁ k₂ 
   let task₂ := Task.spawn fun _ => k₂ * Q
   task₁.get + task₂.get
 
+/--
+The order of the Pallas base field.
+-/
 def Pallas.p : Nat := 0x40000000000000000000000000000000224698fc094cf91b992d30ed00000001 
 
+/--
+The order of the Vesta base field.
+-/
 def Vesta.q : Nat := 0x40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001 
 
 namespace Pallas
 
+/--
+The base field for the Pallas curve
+-/
 abbrev F := Zmod p 
 
+/--
+The Pasta curve has Weierstrass form `y² = x³ + 5` defined over `Zmod Pallas.p`
+-/
 def Curve : Curve F := {a := 0, b := 5}
 
 abbrev Point := ProjectivePoint Curve
@@ -59,8 +77,14 @@ end Pallas
 
 namespace Vesta
 
+/--
+The base field for the Vesta curve
+-/
 abbrev F := Zmod q
 
+/--
+The Vesta curve has Weierstrass form `y² = x³ + 5` defined over `Zmod Vesta.q`
+-/
 def Curve : Curve F := {a := 0, b:= 5}
 
 abbrev Point := ProjectivePoint Curve

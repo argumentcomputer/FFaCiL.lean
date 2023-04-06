@@ -143,13 +143,17 @@ instance [GaloisField L] [GaloisField K] [BEq K] [BEq L]
     let t₂ := extensionFieldTower
     t₂.embed ∘ t₁.embed
 
--- fields with square roots
+/-- The type of residues
+-/
 inductive Residue where
   | zero
   | quadraticResidue
   | quadraticNonResidue
 deriving Repr
 
+/--
+Given `x : K`, `legendreSymbol` checks if `x` is a square by computing the Legendre symbol of `x`.
+-/
 def legendreSymbol [GaloisField K] [BEq K] (x : K) : Residue :=
   let pow := (char K) ^ (deg K) >>> 1
   let exp := fastPow x pow
